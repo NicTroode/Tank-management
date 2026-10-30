@@ -1,0 +1,1092 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Log aquarium water tests, track trends and check species compatibility.">
+<meta name="theme-color" content="#0A6C6A" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0A1618" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Tank Log">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-text-size-adjust:100%}
+img{max-width:100%}
+[hidden]{display:none!important}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+</style>
+<title>Tank Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column on phones, status + tiles on top, trends and advice below; sheets slide up for forms */
+:root{
+  --bg:#EDF3F2; --surface:#FFFFFF; --surface-2:#E2ECEA; --ink:#10272B; --muted:#56706F; --line:#CCDBD9;
+  --accent:#0A6C6A; --accent-ink:#FFFFFF; --accent-soft:#D3EAE7;
+  --good:#1D7F47; --good-bg:#DDF1E4; --warn:#9A6411; --warn-bg:#F8EBCF; --crit:#B9362A; --crit-bg:#F8DEDA;
+  --band-ok:rgba(201,141,32,.12); --band-ideal:rgba(29,127,71,.16);
+  --f-display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0A1618; --surface:#112125; --surface-2:#172B30; --ink:#E2EEEC; --muted:#8FA8A8; --line:#243C41;
+  --accent:#53C2BC; --accent-ink:#06201F; --accent-soft:#163A3B;
+  --good:#5CCB8A; --good-bg:#15372A; --warn:#E6B453; --warn-bg:#3A2E14; --crit:#F2786A; --crit-bg:#41201C;
+  --band-ok:rgba(230,180,83,.10); --band-ideal:rgba(92,203,138,.15); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0A1618; --surface:#112125; --surface-2:#172B30; --ink:#E2EEEC; --muted:#8FA8A8; --line:#243C41;
+  --accent:#53C2BC; --accent-ink:#06201F; --accent-soft:#163A3B;
+  --good:#5CCB8A; --good-bg:#15372A; --warn:#E6B453; --warn-bg:#3A2E14; --crit:#F2786A; --crit-bg:#41201C;
+  --band-ok:rgba(230,180,83,.10); --band-ideal:rgba(92,203,138,.15); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.wrap{max-width:980px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 48px;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font-size:1.15rem;font-weight:700}
+.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600}
+.mono,.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{border:1px solid var(--line);background:var(--surface);padding:9px 14px;border-radius:10px;font-weight:600;font-size:.92rem}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.danger{color:var(--crit);border-color:color-mix(in srgb,var(--crit) 40%,var(--line))}
+.btn.ghost{background:transparent;border-color:transparent;padding:6px 8px}
+.btn.small{padding:5px 10px;font-size:.82rem}
+
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand h1{font-size:1.5rem}
+.brand span{color:var(--muted);font-size:.85rem}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.chip{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;font-weight:600;font-size:.9rem}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip.add{border-style:dashed;color:var(--muted);background:transparent}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--muted);flex:none}
+.dot.good{background:var(--good)}.dot.watch{background:var(--warn)}.dot.act{background:var(--crit)}.dot.cyc{background:var(--accent)}
+
+/* status hero */
+.hero{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.gauge{width:88px;height:88px;border-radius:50%;display:grid;place-items:center;position:relative;background:var(--surface-2)}
+.gauge::before{content:"";position:absolute;inset:7px;border-radius:50%;background:var(--surface)}
+.gauge svg{position:relative;width:38px;height:38px}
+.gauge.good{background:var(--good)}.gauge.watch{background:var(--warn)}.gauge.act{background:var(--crit)}.gauge.cyc{background:conic-gradient(var(--accent) var(--p,30%),var(--surface-2) 0)}
+.hero h2{font-size:1.6rem;line-height:1.1}
+.hero .lede{margin:6px 0 0;color:var(--muted);max-width:60ch}
+.meta{display:flex;gap:6px 16px;flex-wrap:wrap;margin-top:10px;font-size:.84rem;color:var(--muted)}
+.meta b{color:var(--ink);font-weight:600}
+.hero-actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+@media (min-width:640px){.hero{grid-template-columns:auto 1fr auto}.hero-actions{grid-column:auto;flex-direction:column}}
+
+.stages{display:flex;gap:4px;margin-top:12px;max-width:360px}
+.stages div{flex:1;height:6px;border-radius:3px;background:var(--surface-2)}
+.stages div.on{background:var(--accent)}
+.stage-labels{display:flex;justify-content:space-between;max-width:360px;font-size:.72rem;color:var(--muted);margin-top:4px}
+
+/* tiles */
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:640px){.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (min-width:880px){.tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.tile{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 12px 10px;display:flex;flex-direction:column;gap:6px;text-align:left;min-width:0;overflow:hidden}
+.tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--line)}
+.tile.good::before{background:var(--good)}.tile.watch::before{background:var(--warn)}.tile.act::before{background:var(--crit)}.tile.cyc::before{background:var(--accent)}
+.tile.charted{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.tile:hover{border-color:var(--accent)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.panel select.chartsel{font-family:var(--f-display);font-weight:700;font-size:1.15rem;border:0;background:transparent;padding:2px 4px 2px 0;width:auto;max-width:100%;color:var(--ink);border-radius:6px}
+.qrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.qrow input[type=number]{font-family:var(--f-mono);font-size:1.9rem;width:160px;text-align:right;padding:8px 12px}
+.qunit{color:var(--muted);font-family:var(--f-mono)}
+.photo{display:flex;flex-direction:column;gap:8px;background:var(--surface-2);border-radius:12px;padding:12px}
+.photo-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.photo-top .hint{flex:1;min-width:180px}
+.photo-res{display:flex;gap:10px;align-items:flex-start}
+.photo-res img{width:84px;height:84px;object-fit:cover;border-radius:8px;flex:none;background:var(--surface)}
+.photo-msg{font-size:.86rem;min-width:0}
+.photo-msg.good{color:var(--good)}.photo-msg.watch{color:var(--warn)}.photo-msg.act{color:var(--crit)}
+.pn:empty{display:none}
+.pn.lowc{color:var(--warn)}
+.tile-h{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.tile-h .eyebrow{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.val{font-family:var(--f-mono);font-size:1.45rem;font-weight:500;line-height:1}
+.val small{font-size:.75rem;color:var(--muted);margin-left:3px}
+.val.none{color:var(--muted);font-size:1rem}
+.pill{font-size:.7rem;font-weight:600;padding:2px 7px;border-radius:999px;white-space:nowrap}
+.pill.good{background:var(--good-bg);color:var(--good)}.pill.watch{background:var(--warn-bg);color:var(--warn)}.pill.act{background:var(--crit-bg);color:var(--crit)}.pill.cyc{background:var(--accent-soft);color:var(--accent)}.pill.none{background:var(--surface-2);color:var(--muted)}
+.rangebar{position:relative;height:6px;border-radius:3px;background:var(--crit-bg)}
+.rangebar .ok{position:absolute;top:0;bottom:0;background:var(--warn-bg)}
+.rangebar .ideal{position:absolute;top:0;bottom:0;background:var(--good);opacity:.55}
+.rangebar .mk{position:absolute;top:-3px;width:3px;height:12px;border-radius:2px;background:var(--ink);transform:translateX(-50%)}
+.tile-f{display:flex;justify-content:space-between;align-items:end;gap:6px;font-size:.75rem;color:var(--muted)}
+.tile-f svg{width:64px;height:20px;flex:none}
+
+/* sections */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:6px 11px;font-size:.82rem;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface-2);color:var(--ink)}
+.chartbox{width:100%;min-width:0}
+.chartbox svg{display:block;width:100%}
+.trendline{font-size:.92rem;margin:0}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.75rem;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:8px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.trends{display:flex;flex-direction:column;gap:12px;min-width:0}
+.trendgrid{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:760px){.trendgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tcard{gap:8px;padding:14px}
+.tcard-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.tcard-h h3{font-size:1.02rem}
+.tcard-h .u{font-family:var(--f-mono);font-weight:400;font-size:.78rem;color:var(--muted)}
+.tcard-r{display:flex;align-items:center;gap:8px;flex:none}
+.tcard-r .val{font-size:1.15rem}
+.tcard .trendline{font-size:.86rem;color:var(--muted)}
+.cols{display:grid;gap:18px}
+@media (min-width:880px){.cols{grid-template-columns:1.35fr 1fr;align-items:start}}
+
+.recs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.rec{display:grid;grid-template-columns:4px 1fr;gap:12px;padding:2px 0}
+.rec .bar{border-radius:2px;background:var(--line)}
+.rec.act .bar{background:var(--crit)}.rec.watch .bar{background:var(--warn)}.rec.good .bar{background:var(--good)}.rec.cyc .bar{background:var(--accent)}
+.rec h3{font-family:var(--f-body);font-size:.95rem;font-weight:600}
+.rec p{margin:2px 0 0;color:var(--muted);font-size:.88rem}
+
+.splist{display:flex;flex-direction:column}
+.sprow{display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);padding:4px 0}
+.sprow:first-child{border-top:0}
+.spmain{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;text-align:left;background:none;border:0;padding:8px 0}
+.spname{font-weight:600}
+.spsci{font-style:italic;color:var(--muted);font-size:.82rem}
+.spfacts{display:flex;gap:12px;flex-wrap:wrap;font-family:var(--f-mono);font-size:.76rem;color:var(--muted)}
+.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:480px){.facts{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.fact{background:var(--surface-2);border-radius:10px;padding:8px 10px;min-width:0}
+.fact b{display:block;font-family:var(--f-mono);font-weight:500;font-size:.95rem}
+.fact span{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.care h3{font-family:var(--f-body);font-size:.8rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0 0 4px}
+.care p{margin:0}
+.care ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+.care.avoid{border-left:3px solid var(--crit);padding-left:12px}
+.care.avoid h3{color:var(--crit)}
+.care.ok{border-left:3px solid var(--good);padding-left:12px}
+.care.ok h3{color:var(--good)}
+.cnote{border-radius:10px;padding:9px 11px;font-size:.88rem}
+.cnote.act{background:var(--crit-bg);color:var(--crit)}.cnote.watch{background:var(--warn-bg);color:var(--warn)}.cnote.good{background:var(--good-bg);color:var(--good)}
+.libitem{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:10px 0}
+.libitem .t{flex:1;min-width:0}
+.libitem .t b{display:block}
+.libitem .t i{color:var(--muted);font-size:.8rem}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.stepper button{border:0;background:var(--surface-2);width:38px;height:38px;font-size:1.1rem;font-weight:600}
+.stepper output{min-width:44px;text-align:center;font-family:var(--f-mono)}
+.tablewrap{overflow-x:auto;margin:0 -4px}
+table{border-collapse:collapse;width:100%;font-size:.84rem}
+th,td{padding:8px 6px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+th:first-child,td:first-child{text-align:left}
+td.notes{text-align:left;white-space:normal;min-width:140px;color:var(--muted)}
+td .c-good{color:var(--good)}td .c-watch{color:var(--warn)}td .c-act{color:var(--crit);font-weight:600}
+
+.empty{padding:22px 4px;text-align:center;color:var(--muted)}
+.empty strong{display:block;color:var(--ink);font-family:var(--f-display);font-size:1.1rem;margin-bottom:4px}
+.notice{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:.86rem}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(5,15,17,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+@media (min-width:700px){.scrim{align-items:center}}
+.sheet{background:var(--surface);width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+@media (min-width:700px){.sheet{border-radius:18px}}
+.sheet-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sheet-h h2{font-size:1.3rem}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label,.lbl{font-weight:600;font-size:.88rem}
+.hint{font-size:.78rem;color:var(--muted)}
+input[type=text],input[type=number],input[type=datetime-local],select,textarea{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 11px;width:100%;min-width:0}
+textarea{min-height:64px;resize:vertical}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.prow{display:grid;grid-template-columns:1fr 110px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.prow input{text-align:right;font-family:var(--f-mono)}
+.prow input.out-watch{border-color:var(--warn)}.prow input.out-act{border-color:var(--crit)}
+.toggle{display:flex;align-items:center;gap:10px;font-weight:600;font-size:.9rem}
+.toggle input{width:20px;height:20px;accent-color:var(--accent)}
+.rtable td,.rtable th{padding:6px 3px}
+.rtable input[type=number]{padding:6px;width:72px;font-family:var(--f-mono);font-size:.82rem;text-align:right}
+.rtable input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px}
+.actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.err{color:var(--crit);font-size:.85rem;margin:0}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;font-size:.9rem;z-index:30}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .22s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1>Tank Log</h1><span id="clock"></span></div>
+    <button class="btn small" data-act="backup" id="backup-btn" hidden>Backup</button>
+  </header>
+  <nav class="tabs" id="tabs" aria-label="Tanks"></nav>
+  <div id="notice"></div>
+  <main id="main" style="display:flex;flex-direction:column;gap:18px">
+    <div class="panel"><div class="empty"><strong>Loading your tanks…</strong>Your saved tanks and test results will appear here.</div></div>
+  </main>
+</div>
+<div id="sheet" hidden></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+/* ---------- parameter catalogue and profiles ---------- */
+const PARAMS = {
+  temp:{label:'Temperature',short:'Temp',unit:'°C',step:0.1,dp:1},
+  ph:{label:'pH',short:'pH',unit:'',step:0.1,dp:1},
+  ammonia:{label:'Ammonia',short:'NH₃',unit:'ppm',step:0.25,dp:2},
+  nitrite:{label:'Nitrite',short:'NO₂',unit:'ppm',step:0.25,dp:2},
+  nitrate:{label:'Nitrate',short:'NO₃',unit:'ppm',step:5,dp:0},
+  gh:{label:'General hardness',short:'GH',unit:'dGH',step:1,dp:0},
+  kh:{label:'Carbonate hardness',short:'KH',unit:'dKH',step:1,dp:0},
+  salinity:{label:'Salinity',short:'SG',unit:'',step:0.001,dp:3},
+  alk:{label:'Alkalinity',short:'Alk',unit:'dKH',step:0.1,dp:1},
+  calcium:{label:'Calcium',short:'Ca',unit:'ppm',step:10,dp:0},
+  magnesium:{label:'Magnesium',short:'Mg',unit:'ppm',step:10,dp:0},
+  phosphate:{label:'Phosphate',short:'PO₄',unit:'ppm',step:0.01,dp:2},
+};
+// ranges: [ideal, acceptable]; outside acceptable = act now
+const PRESETS = {
+  axolotl:{name:'Axolotl (cold freshwater)',water:'fresh',off:['gh','kh'],ranges:{
+    temp:[[16,18],[14,20]],ph:[[7.0,7.8],[6.5,8.0]],ammonia:[[0,0],[0,0.25]],nitrite:[[0,0],[0,0.25]],nitrate:[[0,20],[0,40]],gh:[[7,14],[5,20]],kh:[[3,8],[2,12]]}},
+  tropical:{name:'Tropical community',water:'fresh',off:['gh','kh'],ranges:{
+    temp:[[24,27],[22,29]],ph:[[6.5,7.5],[6.0,8.0]],ammonia:[[0,0],[0,0.25]],nitrite:[[0,0],[0,0.25]],nitrate:[[0,20],[0,40]],gh:[[4,12],[3,18]],kh:[[3,8],[2,12]]}},
+  coldwater:{name:'Goldfish / coldwater',water:'fresh',off:['gh','kh'],ranges:{
+    temp:[[18,22],[15,24]],ph:[[7.0,8.0],[6.5,8.4]],ammonia:[[0,0],[0,0.25]],nitrite:[[0,0],[0,0.25]],nitrate:[[0,20],[0,40]],gh:[[8,16],[5,20]],kh:[[4,10],[3,14]]}},
+  reef:{name:'Reef (corals)',water:'salt',off:[],ranges:{
+    temp:[[25,26.5],[24,28]],salinity:[[1.024,1.026],[1.023,1.027]],ph:[[8.1,8.4],[7.9,8.5]],ammonia:[[0,0],[0,0.1]],nitrite:[[0,0],[0,0.2]],nitrate:[[1,10],[0,25]],alk:[[7,11],[6,12]],calcium:[[400,450],[380,480]],magnesium:[[1250,1400],[1150,1450]],phosphate:[[0.03,0.1],[0,0.25]]}},
+  fowlr:{name:'Fish-only marine',water:'salt',off:['calcium','magnesium','phosphate'],ranges:{
+    temp:[[24,26],[23,28]],salinity:[[1.020,1.025],[1.019,1.026]],ph:[[8.0,8.4],[7.8,8.5]],ammonia:[[0,0],[0,0.1]],nitrite:[[0,0],[0,0.2]],nitrate:[[0,20],[0,40]],alk:[[7,11],[6,12]],calcium:[[380,450],[350,480]],magnesium:[[1200,1400],[1100,1450]],phosphate:[[0,0.1],[0,0.5]]}},
+};
+/* ---------- species library ----------
+   tags describe what an animal is; rules say which tags it can't live with (tag match, or "anything except");
+   same = how many of its own kind a tank can hold. */
+const TAGS = ['axolotl','small-fish','schooling','long-fin','fin-nipper','betta','bottom','goldfish','coldwater','shrimp','snail','invert','pleco','cichlid','predator-small','clownfish','damsel','goby','marine-small','pistol-shrimp','shrimp-marine','gramma','dottyback','tang','predator-marine','coral'];
+const SPECIES = {
+  axolotl:{name:'Axolotl',sci:'Ambystoma mexicanum',water:'fresh',temp:[16,18],ph:[7.0,7.8],sizeCm:'23–30',lifespan:'10–15 years',minTankL:75,extraL:40,
+    diet:'Carnivore. Earthworms (best staple), sinking axolotl pellets; bloodworms or brine shrimp as treats only.',
+    feeding:'Adults every 2–3 days until full; juveniles daily. Remove leftovers after 15 minutes.',
+    temperament:'Calm and solitary. Doesn’t need company, but will try to eat anything that fits in its mouth.',
+    needs:'Cool water (never above 20°C for long), gentle flow, fine sand or bare bottom, dim light, hides and a lid.',
+    avoid:['All fish, including goldfish and minnows: they nip gills and need warmer water','Shrimp and snails: usually eaten, and shells can cause blockages','Turtles, frogs and other amphibians','Much smaller axolotls: size differences lead to bitten limbs or cannibalism'],
+    goodWith:['Other axolotls of a similar size, with 40 L extra per animal'],
+    tags:['axolotl'],rules:[{except:['axolotl'],reason:'Axolotls should only live with other axolotls. Fish nip their gills and need warmer water, and small tankmates get eaten.'}]},
+  neon:{name:'Neon tetra',sci:'Paracheirodon innesi',water:'fresh',temp:[22,26],ph:[6.0,7.5],sizeCm:'3–4',lifespan:'5 years',minTankL:60,extraL:3,minGroup:6,
+    diet:'Omnivore. Micro pellets, quality flakes, frozen daphnia and brine shrimp.',feeding:'Small amounts once or twice a day.',
+    temperament:'Peaceful schooling fish; stressed and shy in small groups.',needs:'Planted tank, soft to neutral water, subdued light.',
+    avoid:['Angelfish and cichlids: adults eat neons','Goldfish: eat small fish and need cooler water','Axolotls'],goodWith:['Corydoras','Guppies','Cherry shrimp','Bristlenose plecos','Nerite snails'],
+    tags:['small-fish','schooling'],rules:[]},
+  betta:{name:'Betta (Siamese fighting fish)',sci:'Betta splendens',water:'fresh',temp:[24,28],ph:[6.5,7.5],sizeCm:'6–7',lifespan:'3–5 years',minTankL:20,extraL:0,
+    diet:'Carnivore. Betta pellets, frozen bloodworm and brine shrimp.',feeding:'2–3 pellets twice a day; one fast day a week.',
+    temperament:'Males are highly territorial and aggressive to other bettas and flashy fish.',needs:'Warm, still water, a heater, floating plants and a lid (they jump).',
+    avoid:['Other male bettas: they fight to the death','Long-finned fish such as male guppies','Fin-nippers such as tiger barbs','Gouramis'],goodWith:['Corydoras','Nerite snails','Small peaceful schooling fish in larger tanks'],
+    tags:['betta'],rules:[{tag:'long-fin',reason:'Bettas attack fish with long, flowing fins.'},{tag:'fin-nipper',reason:'Fin-nippers shred a betta’s fins.'}],same:{limit:1,reason:'Male bettas fight to the death. Keep one per tank.'}},
+  guppy:{name:'Guppy',sci:'Poecilia reticulata',water:'fresh',temp:[22,28],ph:[7.0,8.0],sizeCm:'3–6',lifespan:'2–3 years',minTankL:40,extraL:4,minGroup:3,
+    diet:'Omnivore. Flakes, micro pellets, frozen foods and some vegetable matter.',feeding:'Small amounts once or twice a day.',
+    temperament:'Peaceful and active. Breeds constantly; keep 2–3 females per male.',needs:'Harder, slightly alkaline water and plants for fry to hide.',
+    avoid:['Bettas: attack their long tails','Tiger barbs and other fin-nippers','Angelfish and other fish big enough to eat them'],goodWith:['Neon tetras','Corydoras','Cherry shrimp','Bristlenose plecos'],
+    tags:['small-fish','long-fin'],rules:[]},
+  tigerbarb:{name:'Tiger barb',sci:'Puntigrus tetrazona',water:'fresh',temp:[23,27],ph:[6.0,7.5],sizeCm:'6–7',lifespan:'5–7 years',minTankL:100,extraL:5,minGroup:6,
+    diet:'Omnivore. Flakes, pellets, frozen and vegetable foods.',feeding:'Once or twice a day.',
+    temperament:'Boisterous fin-nipper. Nips more when kept in small groups.',needs:'Open swimming space and a group of 6 or more.',
+    avoid:['Bettas, guppies, angelfish and other long-finned or slow fish'],goodWith:['Corydoras','Bristlenose plecos','Other fast, short-finned fish'],
+    tags:['fin-nipper','schooling'],rules:[{tag:'long-fin',reason:'Tiger barbs nip long, flowing fins.'},{tag:'betta',reason:'Tiger barbs harass and nip bettas.'}]},
+  cory:{name:'Corydoras catfish',sci:'Corydoras spp.',water:'fresh',temp:[21,26],ph:[6.0,7.8],sizeCm:'5–7',lifespan:'5+ years',minTankL:60,extraL:4,minGroup:6,
+    diet:'Omnivore bottom feeder. Sinking wafers and pellets, frozen bloodworm.',feeding:'Once a day, after lights out works well.',
+    temperament:'Peaceful and social; needs its own kind.',needs:'Soft sand (gravel damages their barbels) and a group of 6+.',
+    avoid:['Large cichlids and other fish that can swallow them','Axolotls'],goodWith:['Neon tetras','Guppies','Bettas','Cherry shrimp','Nerite snails'],
+    tags:['bottom','small-fish','schooling'],rules:[]},
+  angelfish:{name:'Freshwater angelfish',sci:'Pterophyllum scalare',water:'fresh',temp:[24,29],ph:[6.0,7.5],sizeCm:'15 long, 25 tall',lifespan:'10 years',minTankL:200,extraL:40,
+    diet:'Omnivore. Pellets, flakes, frozen bloodworm and brine shrimp.',feeding:'Once or twice a day.',
+    temperament:'Semi-aggressive cichlid. Pairs become territorial when breeding.',needs:'Tall tank (45 cm+ high), plants and stable warm water.',
+    avoid:['Neon tetras and other small fish: eaten as the angel grows','Dwarf shrimp','Tiger barbs and other fin-nippers'],goodWith:['Corydoras','Bristlenose plecos','Larger peaceful tetras'],
+    tags:['cichlid','long-fin','predator-small'],rules:[{tag:'small-fish',reason:'Adult angelfish eat small fish such as neon tetras.'},{tag:'shrimp',reason:'Angelfish eat dwarf shrimp.'}]},
+  goldfish:{name:'Fancy goldfish',sci:'Carassius auratus',water:'fresh',temp:[18,22],ph:[7.0,8.0],sizeCm:'15–20',lifespan:'10–15+ years',minTankL:150,extraL:40,
+    diet:'Omnivore. Sinking goldfish pellets, gel food, blanched peas and greens.',feeding:'Small amounts 1–2 times a day; they overeat.',
+    temperament:'Peaceful but messy, producing lots of waste.',needs:'Big tank, strong filtration and cool water. No heater needed.',
+    avoid:['Tropical fish: need warmer water','Small fish and shrimp: eaten','Plecos: can suck their slime coat','Axolotls'],goodWith:['Other fancy goldfish','Nerite snails (large enough not to be eaten)'],
+    tags:['goldfish','coldwater'],rules:[{tag:'small-fish',reason:'Goldfish eat anything small enough to fit in their mouths.'},{tag:'shrimp',reason:'Goldfish eat shrimp.'},{tag:'pleco',reason:'Plecos can latch on and graze goldfish slime coats.'}]},
+  cherry:{name:'Cherry shrimp',sci:'Neocaridina davidi',water:'fresh',temp:[18,26],ph:[6.5,8.0],sizeCm:'2–3',lifespan:'1–2 years',minTankL:20,extraL:0,minGroup:10,
+    diet:'Algae and biofilm, plus shrimp pellets or blanched vegetables.',feeding:'A small pinch every 1–2 days.',
+    temperament:'Peaceful. Breeds easily if not eaten.',needs:'Stable, cycled water; no copper medications; moss for babies to hide.',
+    avoid:['Axolotls, goldfish, angelfish and most fish big enough to eat them','Copper-based medicines and fertilisers'],goodWith:['Neon tetras','Corydoras','Nerite snails','Bristlenose plecos'],
+    tags:['shrimp','invert'],rules:[]},
+  nerite:{name:'Nerite snail',sci:'Neritina spp.',water:'fresh',temp:[20,27],ph:[7.0,8.5],sizeCm:'2–3',lifespan:'1–2 years',minTankL:20,extraL:0,
+    diet:'Algae grazer. Add algae wafers if the glass is clean.',feeding:'Supplement 2–3 times a week once algae runs out.',
+    temperament:'Peaceful. Lays white eggs that won’t hatch in fresh water.',needs:'Harder water for a healthy shell and a lid (they climb out).',
+    avoid:['Pufferfish and loaches: eat snails','Axolotls: can swallow them'],goodWith:['Almost all peaceful community fish and shrimp'],
+    tags:['snail','invert'],rules:[]},
+  bristlenose:{name:'Bristlenose pleco',sci:'Ancistrus spp.',water:'fresh',temp:[22,27],ph:[6.5,7.5],sizeCm:'12–15',lifespan:'10+ years',minTankL:100,extraL:40,
+    diet:'Herbivore. Algae wafers, blanched zucchini and cucumber; needs driftwood to rasp.',feeding:'Once a day, in the evening.',
+    temperament:'Peaceful, but males claim caves and chase each other.',needs:'Driftwood, caves and good filtration.',
+    avoid:['Goldfish and axolotls: may graze their slime coats','Another male bristlenose in a small tank'],goodWith:['Neon tetras','Corydoras','Guppies','Angelfish'],
+    tags:['pleco','bottom'],rules:[{tag:'axolotl',reason:'Plecos can latch on to axolotls and damage their skin.'}],same:{limit:1,reason:'Male bristlenoses fight over caves. Keep one male unless the tank is large with a cave each.',level:'watch'}},
+  clownfish:{name:'Ocellaris clownfish',sci:'Amphiprion ocellaris',water:'salt',temp:[24,27],ph:[8.1,8.4],sizeCm:'8–11',lifespan:'15–20 years',minTankL:75,extraL:0,
+    diet:'Omnivore. Marine pellets, frozen mysis and brine shrimp, nori.',feeding:'Small amounts 2 times a day.',
+    temperament:'Semi-aggressive to its own kind; a pair defends its spot.',needs:'Stable reef water. An anemone is optional.',
+    avoid:['More clownfish than a single pair','Other clownfish species','Damselfish','Lionfish, eels and other predators'],goodWith:['Yellow watchman goby','Royal gramma','Cleaner shrimp','Pistol shrimp'],
+    tags:['clownfish','marine-small'],rules:[{tag:'damsel',reason:'Damselfish and clownfish fight over territory.'}],same:{limit:2,reason:'Keep one pair. Groups fight until only a pair is left.'}},
+  watchman:{name:'Yellow watchman goby',sci:'Cryptocentrus cinctus',water:'salt',temp:[24,27],ph:[8.1,8.4],sizeCm:'8–10',lifespan:'5–10 years',minTankL:75,extraL:40,
+    diet:'Carnivore. Frozen mysis and brine shrimp, small sinking marine pellets.',feeding:'1–2 times a day, aimed near its burrow.',
+    temperament:'Peaceful to other fish, but territorial with other gobies over its burrow.',needs:'Deep sand bed (5 cm+), rubble to dig under, and a tight lid: it jumps when startled.',
+    avoid:['Other watchman gobies, unless a confirmed mated pair','Other burrowing gobies, such as diamond or signal gobies','Lionfish, eels, groupers and triggerfish: will eat it','Aggressive dottybacks'],
+    goodWith:['Pistol shrimp: they share a burrow','Ocellaris clownfish','Royal gramma','Cleaner shrimp'],
+    tags:['goby','marine-small','bottom'],rules:[{tag:'goby',reason:'Burrowing gobies fight over the same sand burrows.'},{tag:'dottyback',reason:'Dottybacks bully small, shy bottom dwellers.'}],same:{limit:1,reason:'Watchman gobies fight over burrows. Keep one, or a confirmed mated pair in a larger tank.'}},
+  pistol:{name:'Tiger pistol shrimp',sci:'Alpheus bellulus',water:'salt',temp:[22,27],ph:[8.1,8.4],sizeCm:'4–5',lifespan:'3–5 years',minTankL:40,extraL:20,
+    diet:'Scavenger. Takes mysis and pellets near its burrow.',feeding:'Spot-feed a few times a week; it also takes the goby’s scraps.',
+    temperament:'Shy digger. Snaps its claw loudly; harmless to most fish.',needs:'Sand and rubble to burrow; ideal partner for a watchman goby.',
+    avoid:['Other pistol shrimp, unless a mated pair','Triggerfish, hawkfish, puffers and large wrasses: eat shrimp'],goodWith:['Yellow watchman goby','Clownfish'],
+    tags:['pistol-shrimp','shrimp-marine','invert'],rules:[],same:{limit:1,reason:'Pistol shrimp fight each other unless they are a mated pair.'}},
+  cleaner:{name:'Skunk cleaner shrimp',sci:'Lysmata amboinensis',water:'salt',temp:[24,27],ph:[8.1,8.4],sizeCm:'5–6',lifespan:'2–3 years',minTankL:75,extraL:0,
+    diet:'Scavenger and cleaner. Takes mysis, pellets and parasites off fish.',feeding:'Usually fed by catching scraps; target-feed weekly.',
+    temperament:'Peaceful; sets up a cleaning station.',needs:'Very stable salinity; acclimatise slowly. No copper.',
+    avoid:['Lionfish, triggerfish, hawkfish and puffers: eat shrimp','Copper medicines'],goodWith:['Clownfish','Yellow watchman goby','Royal gramma'],
+    tags:['shrimp-marine','invert'],rules:[]},
+  gramma:{name:'Royal gramma',sci:'Gramma loreto',water:'salt',temp:[24,27],ph:[8.1,8.4],sizeCm:'7–8',lifespan:'5+ years',minTankL:110,extraL:0,
+    diet:'Carnivore. Frozen mysis, brine shrimp and marine pellets.',feeding:'1–2 times a day.',
+    temperament:'Peaceful but defends its cave.',needs:'Rockwork with caves and overhangs.',
+    avoid:['Another royal gramma in a small tank','Dottybacks: fight over caves','Lionfish and other predators'],goodWith:['Clownfish','Yellow watchman goby','Cleaner shrimp'],
+    tags:['gramma','marine-small'],rules:[{tag:'dottyback',reason:'Dottybacks and grammas fight over caves.'}],same:{limit:1,reason:'Royal grammas fight over caves in smaller tanks.'}},
+  yellowtang:{name:'Yellow tang',sci:'Zebrasoma flavescens',water:'salt',temp:[24,27],ph:[8.1,8.4],sizeCm:'18–20',lifespan:'10–30 years',minTankL:450,extraL:0,
+    diet:'Herbivore. Nori and marine algae daily, plus some frozen foods.',feeding:'Algae available all day; other food 1–2 times a day.',
+    temperament:'Active swimmer; aggressive to other tangs.',needs:'Long tank with open swimming room and strong flow.',
+    avoid:['Other tangs, especially similar shapes and colours'],goodWith:['Clownfish','Royal gramma','Cleaner shrimp'],
+    tags:['tang'],rules:[{tag:'tang',reason:'Tangs fight each other, especially similar shapes and colours.'}],same:{limit:1,reason:'Keep one yellow tang unless the tank is very large.'}},
+  lionfish:{name:'Volitans lionfish',sci:'Pterois volitans',water:'salt',temp:[24,27],ph:[8.1,8.4],sizeCm:'30–38',lifespan:'10–15 years',minTankL:450,extraL:0,
+    diet:'Predator. Frozen silversides, prawn and krill.',feeding:'2–3 times a week.',
+    temperament:'Calm but eats any fish or shrimp that fits in its mouth. Venomous spines.',needs:'Large tank; handle with care.',
+    avoid:['Small fish such as clownfish, gobies and grammas','Shrimp'],goodWith:['Large fish it can’t swallow'],
+    tags:['predator-marine'],rules:[{tag:'marine-small',reason:'Lionfish swallow fish up to half their own length.'},{tag:'shrimp-marine',reason:'Lionfish eat shrimp.'}]},
+};
+const spec = (t,id)=> (t.custom&&t.custom[id]) || SPECIES[id];
+function ruleHits(A,B){ return (A.rules||[]).filter(r=> (r.tag && (B.tags||[]).includes(r.tag)) || (r.except && !r.except.some(x=>(B.tags||[]).includes(x)))) }
+function overlaps(a,b){ return a && b && a[0]<=b[1] && b[0]<=a[1] }
+function compat(t, extra){
+  const list=(t.species||[]).map(s=>({...s})); if(extra){ const ex=list.find(s=>s.id===extra.id); if(ex) ex.count+=extra.count; else list.push({...extra}) }
+  const out=[]; const add=(level,ids,text)=>out.push({level,ids,text});
+  const tr=t.ranges?.temp?.ideal;
+  list.forEach(s=>{ const A=spec(t,s.id); if(!A) return;
+    if(A.water && A.water!==t.water) add('act',[s.id],`${A.name} is a ${A.water==='salt'?'saltwater':'freshwater'} animal; this is a ${t.water==='salt'?'saltwater':'freshwater'} tank.`);
+    else if(tr && A.temp && !overlaps(A.temp,tr)) add('act',[s.id],`${A.name} needs ${A.temp[0]}–${A.temp[1]}°C, but the tank is set for ${fmtR('temp',tr)}°C.`);
+    if(A.same && s.count>A.same.limit) add(A.same.level||'act',[s.id],A.same.reason);
+    if(A.minGroup && s.count<A.minGroup) add('watch',[s.id],`${A.name} do best in groups of ${A.minGroup} or more; you have ${s.count}.`);
+    const need=(A.minTankL||0)+(A.extraL||0)*Math.max(0,s.count-1);
+    if(t.volumeL && need && t.volumeL<need) add('watch',[s.id],`${s.count>1?s.count+' × ':''}${A.name} need about ${need} L; this tank is ${t.volumeL} L.`);
+  });
+  for(let i=0;i<list.length;i++) for(let j=i+1;j<list.length;j++){
+    const A=spec(t,list[i].id), B=spec(t,list[j].id); if(!A||!B) continue; const ids=[list[i].id,list[j].id];
+    const hits=[...ruleHits(A,B),...ruleHits(B,A)];
+    const seen=new Set(); hits.forEach(r=>{ if(!seen.has(r.reason)){ seen.add(r.reason); add('act',ids,`${A.name} + ${B.name}: ${r.reason}`) } });
+    if(!hits.length && A.temp && B.temp && !overlaps(A.temp,B.temp)) add('act',ids,`${A.name} (${A.temp[0]}–${A.temp[1]}°C) and ${B.name} (${B.temp[0]}–${B.temp[1]}°C) need different temperatures.`);
+  }
+  return out;
+}
+
+const LEVEL = {good:0,watch:1,act:2};
+const STATUS_TEXT = {good:'In range',watch:'Watch',act:'Act now',cyc:'Cycling',none:'No data'};
+
+function presetRanges(key){
+  const p = PRESETS[key]; const keys = Object.keys(p.ranges); const ranges = {};
+  keys.forEach(k=>{ranges[k]={ideal:[...p.ranges[k][0]],ok:[...p.ranges[k][1]],on:!p.off.includes(k)}});
+  return {keys,ranges};
+}
+
+/* ---------- state + store ---------- */
+const S = {tanks:[],readings:[],sel:null,chartKey:null,chartRange:30,histAll:false,loaded:{t:false,r:false}};
+let db = null, MODE = 'loading';
+const LS_KEY='tanklog.data.v1', LS_BACKUP='tanklog.lastBackup';
+function lsLoad(){ try{ const d=JSON.parse(localStorage.getItem(LS_KEY)||'null'); if(d&&Array.isArray(d.tanks)&&Array.isArray(d.readings)) return d }catch(e){} return {tanks:[],readings:[]} }
+function persist(){ if(MODE==='local'){ try{ localStorage.setItem(LS_KEY,JSON.stringify({tanks:S.tanks,readings:S.readings})) }catch(e){ toast('Couldn’t save on this device. Storage may be full.') } try{ navigator.storage?.persist?.() }catch(e){} } render() }
+try{ S.sel = localStorage.getItem('tanklog.sel'); }catch(e){}
+
+const store = {
+  async addTank(data){ if(db){ const r = await db.collection('tanks').add(data); return r.id } const id='t'+Date.now(); S.tanks.push({id,...data}); persist(); return id },
+  async setTank(id,data){ if(db) return db.collection('tanks').doc(id).set(data); const i=S.tanks.findIndex(t=>t.id===id); S.tanks[i]={id,...data}; persist() },
+  async delTank(id){ if(db){ for(const r of S.readings.filter(r=>r.tankId===id)) await db.collection('readings').doc(r.id).delete(); return db.collection('tanks').doc(id).delete() } S.readings=S.readings.filter(r=>r.tankId!==id); S.tanks=S.tanks.filter(t=>t.id!==id); persist() },
+  async addReading(data){ if(db) return db.collection('readings').add(data); S.readings.push({id:'r'+Date.now(),...data}); persist() },
+  async delReading(id){ if(db) return db.collection('readings').doc(id).delete(); S.readings=S.readings.filter(r=>r.id!==id); persist() },
+};
+
+/* ---------- helpers ---------- */
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = (k,v)=> v==null||isNaN(v) ? '–' : (+v).toFixed(PARAMS[k].dp);
+const fmtR = (k,[a,b])=> a===b ? fmt(k,a) : `${fmt(k,a)}–${fmt(k,b)}`;
+const unit = k=> PARAMS[k].unit ? ' '+PARAMS[k].unit : '';
+const DAY = 864e5;
+const dateFmt = new Intl.DateTimeFormat('en-AU',{day:'numeric',month:'short'});
+const dtFmt = new Intl.DateTimeFormat('en-AU',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
+function ago(ts){ const d=(Date.now()-ts)/DAY; if(d<1/24) return 'just now'; if(d<1) return Math.round(d*24)+' h ago'; if(d<2) return 'yesterday'; return Math.round(d)+' days ago' }
+function localInput(ts){ const d=new Date(ts); const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}` }
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>t.hidden=true,2200) }
+
+const tank = ()=> S.tanks.find(t=>t.id===S.sel);
+const activeKeys = t=> t.keys.filter(k=>t.ranges[k]?.on);
+const tankReadings = t=> S.readings.filter(r=>r.tankId===t.id).sort((a,b)=>a.ts-b.ts);
+function statusOf(t,k,v){
+  if(v==null||isNaN(v)) return 'none';
+  const R=t.ranges[k]; const e=1e-9;
+  if(t.cycling && (k==='ammonia'||k==='nitrite'||k==='nitrate')) return 'cyc';
+  if(v>=R.ideal[0]-e && v<=R.ideal[1]+e) return 'good';
+  if(v>=R.ok[0]-e && v<=R.ok[1]+e) return 'watch';
+  return 'act';
+}
+function latest(t){
+  const out={}; const rs=tankReadings(t);
+  for(let i=rs.length-1;i>=0;i--){ for(const [k,v] of Object.entries(rs[i].values||{})){ if(out[k]==null && v!=null) out[k]={v,ts:rs[i].ts,prev:null}; else if(out[k] && out[k].prev==null && v!=null && rs[i].ts<out[k].ts) out[k].prev=v } }
+  return out;
+}
+function overall(t){
+  const L=latest(t); const keys=activeKeys(t).filter(k=>L[k]);
+  const cl=compat(t); const cWorst=cl.some(c=>c.level==='act')?'act':cl.some(c=>c.level==='watch')?'watch':null;
+  if(!keys.length) return cWorst==='act'?'act':t.cycling?'cyc':(cWorst||'none');
+  let worst='good';
+  for(const k of keys){ const s=statusOf(t,k,L[k].v); if(s in LEVEL && LEVEL[s]>LEVEL[worst]) worst=s }
+  if(cWorst && LEVEL[cWorst]>LEVEL[worst]) worst=cWorst;
+  if(t.cycling && worst!=='act') return 'cyc';
+  return worst;
+}
+
+/* ---------- trend analysis ---------- */
+function trend(t,k){
+  const now=Date.now();
+  const pts=tankReadings(t).filter(r=>r.values?.[k]!=null && r.ts>now-30*DAY).map(r=>[r.ts/DAY,+r.values[k]]);
+  if(pts.length<3) return null;
+  const n=pts.length, mx=pts.reduce((s,p)=>s+p[0],0)/n, my=pts.reduce((s,p)=>s+p[1],0)/n;
+  let num=0,den=0; pts.forEach(([x,y])=>{num+=(x-mx)*(y-my);den+=(x-mx)**2});
+  const slope=den?num/den:0; const week=slope*7;
+  const R=t.ranges[k]; const width=Math.max(R.ok[1]-R.ok[0],PARAMS[k].step*4);
+  const last=pts[pts.length-1][1];
+  const res={week,last,dir:'steady',days:null,limit:null};
+  if(Math.abs(week)<width*0.05) return res;
+  res.dir=week>0?'rising':'falling';
+  if(week>0 && last<R.ok[1]){ res.limit=R.ok[1]; res.days=(R.ok[1]-last)/slope }
+  if(week<0 && last>R.ok[0]){ res.limit=R.ok[0]; res.days=(R.ok[0]-last)/slope }
+  return res;
+}
+function trendText(t,k){
+  const tr=trend(t,k); const P=PARAMS[k];
+  if(!tr) return `Log at least 3 ${P.label.toLowerCase()} tests in 30 days to see a trend.`;
+  if(tr.dir==='steady') return `${P.label} has been steady over the last 30 days.`;
+  let s=`${P.label} is ${tr.dir} about ${Math.abs(tr.week).toFixed(Math.max(P.dp,1))}${unit(k)} a week.`;
+  if(tr.days!=null && tr.days<45) s+=` At this rate it leaves the acceptable range (${fmt(k,tr.limit)}${unit(k)}) in about ${Math.max(1,Math.round(tr.days))} days, around ${dateFmt.format(Date.now()+tr.days*DAY)}.`;
+  return s;
+}
+
+/* ---------- cycling ---------- */
+function cycleInfo(t){
+  const rs=tankReadings(t); const L=latest(t);
+  const a=L.ammonia?.v, n=L.nitrite?.v, no3=L.nitrate?.v;
+  let stage=0;
+  if(a!=null) stage=1;
+  if(n!=null && n>0) stage=2;
+  if(stage>=1 && a===0 && n===0 && no3>0) stage=3;
+  // two most recent readings that include ammonia+nitrite both zero with nitrate > 0
+  const full=rs.filter(r=>r.values?.ammonia!=null && r.values?.nitrite!=null).slice(-2);
+  const done = full.length===2 && full.every(r=>r.values.ammonia===0 && r.values.nitrite===0 && (r.values.nitrate||0)>0);
+  return {stage,done,a,n,no3};
+}
+
+/* ---------- recommendations ---------- */
+function recommendations(t){
+  const out=[]; const L=latest(t); const rs=tankReadings(t); const vol=+t.volumeL||0;
+  const push=(level,title,body)=>out.push({level,title,body});
+  compat(t).forEach(c=>push(c.level, c.level==='act'?'Livestock clash':'Livestock check', c.text));
+  if(t.cycling && (t.species||[]).length) push('cyc','Animals wait for the cycle','Add the animals listed for this tank only once the cycle is complete and nitrate is under 20 ppm.');
+  if(!rs.length){ out.sort((a,b)=>({act:0,watch:1,cyc:2,good:3}[a.level])-({act:0,watch:1,cyc:2,good:3}[b.level])); push('cyc','Log your first test',t.cycling?'Dose ammonia to 2 ppm, wait an hour, then test ammonia, nitrite, nitrate and pH.':'Test every parameter on the list to set a baseline.'); return out }
+  const lastTs=rs[rs.length-1].ts; const since=(Date.now()-lastTs)/DAY;
+  const every=t.cycling?3:7;
+  if(since>every) push('watch','Test is due',`Last test was ${ago(lastTs)}. Aim for every ${every} days${t.cycling?' while cycling':''}.`);
+
+  if(t.cycling){
+    const c=cycleInfo(t);
+    if(c.done) push('good','Cycle looks complete',`Two tests in a row show 0 ammonia and 0 nitrite with nitrate present. Turn off cycling mode in tank settings, then do a large water change to bring nitrate under ${fmt('nitrate',t.ranges.nitrate?.ideal?.[1]??20)} ppm before adding animals.`);
+    else if(c.stage===3) push('cyc','Nearly there: confirm the cycle','Dose ammonia back to 2 ppm and test again in 24 hours. Zero ammonia and nitrite twice in a row means it is cycled.');
+    else if(c.stage===2) push('cyc','Stage 2: nitrite bacteria are growing','Nitrite has appeared, which means the first bacteria are working. Keep feeding ammonia and keep testing every 2–3 days.');
+    else if(c.stage===1) push('cyc','Stage 1: waiting for ammonia to drop','This usually takes 1–3 weeks. Keep the water warm (24–28°C) and the filter running.');
+    if(c.a!=null && c.a<1 && !c.done) push('cyc','Top up ammonia',`Ammonia is at ${fmt('ammonia',c.a)} ppm. Dose back to 2 ppm so the bacteria keep growing.`);
+    if(c.n!=null && c.n>5) push('act','Nitrite is very high',`At ${fmt('nitrite',c.n)} ppm, nitrite can stall the cycle. Do a 50% water change${vol?` (about ${Math.round(vol*.5)} L)`:''} and keep going.`);
+  }
+
+  for(const k of activeKeys(t)){
+    const cur=L[k]; if(!cur) continue;
+    const s=statusOf(t,k,cur.v); if(s!=='watch'&&s!=='act') continue;
+    const R=t.ranges[k], v=cur.v, high=v>R.ideal[1], P=PARAMS[k];
+    const val=`${fmt(k,v)}${unit(k)}`, ideal=`${fmtR(k,R.ideal)}${unit(k)}`;
+    let title=`${P.label} ${high?'high':'low'} (${val})`, body='';
+    switch(k){
+      case 'ammonia': case 'nitrite':
+        body=`Do a 30–50% water change${vol?` (${Math.round(vol*.3)}–${Math.round(vol*.5)} L)`:''} now with a conditioner that detoxifies ammonia and nitrite. Repeat daily until it reads 0. Feed lightly and check for rotting food${k==='nitrite'?' or a filter rinsed in tap water':''}.`; break;
+      case 'nitrate': {
+        if(high){ const target=R.ideal[1]||10; let pct=Math.ceil((1-target/v)*20)*5; pct=Math.min(Math.max(pct,10),50);
+          body=`A ${pct}% water change${vol?` (about ${Math.round(vol*pct/100)} L)`:''} should bring it near ${fmt(k,target)} ppm.${(1-target/v)>0.5?' Repeat in a day or two to get it all the way down.':''} Live plants and lighter feeding slow the build-up.`;
+        } else body='Low nitrate can starve corals. Ease off water changes or feed a little more.';
+        break; }
+      case 'temp':
+        body = high ? (t.preset==='axolotl'?`Axolotls stress above 20°C. Run fans across the surface, keep the tank out of the sun, and consider a chiller. Drop it no more than 2°C an hour.`:`Improve cooling with fans or a chiller, and check the heater isn't stuck on. Aim for ${ideal}.`)
+                    : (t.preset==='axolotl'?`Below ${fmt(k,R.ok[0])}°C axolotls slow right down. Reduce feeding and let it warm gradually.`:`Check the heater is working and set to ${ideal}.`);
+        break;
+      case 'ph':
+        body=`Aim for ${ideal}. Check KH first, since low KH lets pH crash. Change pH slowly, no more than 0.2 a day. A water change is the safest first step.`; break;
+      case 'salinity':
+        body = high?'Top off evaporation with fresh RO water, not saltwater, and recheck tomorrow.':'Use premixed saltwater for top-ups and water changes to raise it slowly, about 0.001 a day.'; break;
+      case 'alk': body=high?'Pause alkalinity dosing and retest in 2 days.':'Dose an alkalinity buffer slowly, no more than 1 dKH a day.'; break;
+      case 'calcium': body=high?'Pause calcium dosing; check alkalinity, as high calcium can crash it.':'Dose calcium in small daily amounts and check alkalinity too.'; break;
+      case 'magnesium': body=high?'Pause magnesium dosing.':'Dose magnesium; low magnesium makes calcium and alkalinity hard to hold.'; break;
+      case 'phosphate': body=high?'Reduce feeding, use a phosphate remover, and do a water change.':'Very low phosphate can starve corals; ease off phosphate removers.'; break;
+      default: body=`Aim for ${ideal}. Adjust gradually with water changes or a buffer.`;
+    }
+    push(s,title,body);
+  }
+  for(const k of activeKeys(t)){
+    if(t.cycling && ['ammonia','nitrite','nitrate'].includes(k)) continue;
+    const tr=trend(t,k); if(!tr||tr.days==null||tr.days>21) continue;
+    const s=statusOf(t,k,L[k]?.v); if(s==='act') continue;
+    push('watch',`${PARAMS[k].label} trending toward its limit`, trendText(t,k)+(k==='nitrate'?' Plan a water change before then.':''));
+  }
+  if(!out.some(r=>r.level==='act'||r.level==='watch'||r.level==='cyc')){
+    push('good','Everything is in range',`Next test due ${dateFmt.format(lastTs+every*DAY)}. Keep up weekly 20–30% water changes.`);
+  }
+  out.sort((a,b)=>({act:0,watch:1,cyc:2,good:3}[a.level])-({act:0,watch:1,cyc:2,good:3}[b.level]));
+  return out;
+}
+
+/* ---------- small graphics ---------- */
+function spark(t,k){
+  const pts=tankReadings(t).filter(r=>r.values?.[k]!=null).slice(-10).map(r=>+r.values[k]);
+  if(pts.length<2) return '';
+  const lo=Math.min(...pts), hi=Math.max(...pts), span=hi-lo||1;
+  const xy=pts.map((v,i)=>[2+i*(60/(pts.length-1)), 17-((v-lo)/span)*14]);
+  const d=xy.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  const last=xy[xy.length-1];
+  return `<svg viewBox="0 0 64 20" aria-hidden="true"><path d="${d}" fill="none" stroke="var(--muted)" stroke-width="1.4" stroke-linejoin="round"/><circle cx="${last[0]}" cy="${last[1]}" r="2.2" fill="var(--ink)"/></svg>`;
+}
+function rangeBar(t,k,v){
+  const R=t.ranges[k]; let lo=Math.min(R.ok[0],v??R.ok[0]), hi=Math.max(R.ok[1],v??R.ok[1]);
+  const pad=(hi-lo||PARAMS[k].step*4)*0.2; lo-=pad; hi+=pad; if(R.ok[0]===0&&lo<0) lo=Math.min(0,v??0)-(hi*0.05);
+  const x=n=>((n-lo)/(hi-lo)*100).toFixed(1)+'%';
+  const idealW = Math.max((R.ideal[1]-R.ideal[0])/(hi-lo)*100,2.5);
+  return `<div class="rangebar" aria-hidden="true"><div class="ok" style="left:${x(R.ok[0])};width:${((R.ok[1]-R.ok[0])/(hi-lo)*100).toFixed(1)}%"></div><div class="ideal" style="left:${x(R.ideal[0])};width:${idealW.toFixed(1)}%"></div>${v!=null?`<div class="mk" style="left:${x(v)}"></div>`:''}</div>`;
+}
+function niceTicks(lo,hi,n=4){
+  const raw=(hi-lo)/n||1; const mag=10**Math.floor(Math.log10(raw)); const f=raw/mag;
+  const step=(f<1.5?1:f<3?2:f<7?5:10)*mag; const out=[];
+  for(let v=Math.ceil(lo/step)*step; v<=hi+step*1e-6; v+=step) out.push(+v.toFixed(10));
+  return {ticks:out,step};
+}
+function chart(t,k,days,W,H=230){
+  const m={l:44,r:14,t:12,b:30}, iw=W-m.l-m.r, ih=H-m.t-m.b;
+  const now=Date.now(); const all=tankReadings(t);
+  const pts=all.filter(r=>r.values?.[k]!=null && (!days||r.ts>=now-days*DAY));
+  if(!pts.length) return `<div class="empty"><strong>No ${esc(PARAMS[k].label.toLowerCase())} readings ${days?`in the last ${days} days`:'yet'}</strong>Log a test to start the chart.</div>`;
+  const R=t.ranges[k];
+  const x0 = days? now-days*DAY : Math.min(pts[0].ts, now-7*DAY), x1=now;
+  const vals=pts.map(p=>+p.values[k]);
+  let lo=Math.min(...vals,R.ok[0]), hi=Math.max(...vals,R.ok[1]);
+  const pad=(hi-lo||1)*0.12; lo=lo-pad; hi=hi+pad; if(R.ok[0]>=0 && Math.min(...vals)>=0) lo=Math.max(lo, 0 - (hi*0.0));
+  const {ticks}=niceTicks(lo,hi,4); lo=Math.min(lo,ticks[0]); hi=Math.max(hi,ticks[ticks.length-1]);
+  const X=ts=>m.l+(ts-x0)/(x1-x0)*iw, Y=v=>m.t+ih-(v-lo)/(hi-lo)*ih;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(PARAMS[k].label)} over time">`;
+  // bands
+  s+=`<rect x="${m.l}" y="${Y(R.ok[1])}" width="${iw}" height="${Math.max(Y(R.ok[0])-Y(R.ok[1]),1)}" fill="var(--band-ok)"/>`;
+  if(R.ideal[1]>R.ideal[0]) s+=`<rect x="${m.l}" y="${Y(R.ideal[1])}" width="${iw}" height="${Y(R.ideal[0])-Y(R.ideal[1])}" fill="var(--band-ideal)"/>`;
+  else s+=`<line x1="${m.l}" x2="${m.l+iw}" y1="${Y(R.ideal[0])}" y2="${Y(R.ideal[0])}" stroke="var(--good)" stroke-width="2" opacity=".6"/>`;
+  // grid
+  ticks.forEach(v=>{ s+=`<line x1="${m.l}" x2="${m.l+iw}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-dasharray="2 4"/><text x="${m.l-8}" y="${Y(v)+4}" text-anchor="end" font-size="11" font-family="IBM Plex Mono,monospace" fill="var(--muted)">${fmt(k,v)}</text>` });
+  // x labels
+  const span=(x1-x0)/DAY, nl=W<420?3:5;
+  for(let i=0;i<nl;i++){ const ts=x0+(x1-x0)*i/(nl-1); s+=`<text x="${X(ts)}" y="${H-8}" text-anchor="${i===0?'start':i===nl-1?'end':'middle'}" font-size="11" fill="var(--muted)">${dateFmt.format(ts)}</text>` }
+  // water changes
+  all.filter(r=>r.wc>0 && r.ts>=x0).forEach(r=>{ s+=`<line x1="${X(r.ts)}" x2="${X(r.ts)}" y1="${m.t+ih}" y2="${m.t+ih-10}" stroke="var(--accent)" stroke-width="2"><title>${r.wc}% water change</title></line>` });
+  // line
+  const xy=pts.map(p=>[X(p.ts),Y(+p.values[k]),p]);
+  if(xy.length>1){ const d=xy.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+    s+=`<path d="${d} L${xy[xy.length-1][0].toFixed(1)} ${m.t+ih} L${xy[0][0].toFixed(1)} ${m.t+ih}Z" fill="var(--accent)" opacity=".07"/><path d="${d}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>`; }
+  xy.forEach(([x,y,p],i)=>{ const st=statusOf(t,k,+p.values[k]); const col=st==='act'?'var(--crit)':st==='watch'?'var(--warn)':'var(--accent)'; const last=i===xy.length-1;
+    s+=`<circle cx="${x}" cy="${y}" r="${last?5:3.2}" fill="${last?col:'var(--surface)'}" stroke="${col}" stroke-width="2"><title>${dtFmt.format(p.ts)}: ${fmt(k,p.values[k])}${unit(k)}</title></circle>` });
+  const lp=xy[xy.length-1]; const lx=Math.min(lp[0], m.l+iw-4);
+  s+=`<text x="${lx}" y="${Math.max(lp[1]-10,m.t+10)}" text-anchor="end" font-size="12" font-weight="600" font-family="IBM Plex Mono,monospace" fill="var(--ink)">${fmt(k,lp[2].values[k])}</text>`;
+  return s+'</svg>';
+}
+
+/* ---------- render ---------- */
+function renderTabs(){
+  const tabs=S.tanks.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).map(t=>{ const o=overall(t); return `<button class="chip" aria-pressed="${t.id===S.sel}" data-tank="${t.id}"><span class="dot ${o==='cyc'?'cyc':o}"></span>${esc(t.name)}</button>` }).join('');
+  $('#tabs').innerHTML = tabs + `<button class="chip add" data-act="new-tank">+ Add tank</button>`;
+}
+function render(){
+  if(!S.loaded.t || !S.loaded.r) return;
+  if(S.tanks.length && !tank()) S.sel=S.tanks.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0))[0].id;
+  renderTabs();
+  const t=tank(); const main=$('#main');
+  if(!t){ main.innerHTML=`<div class="panel"><div class="empty"><strong>Add your first tank</strong>Choose freshwater or saltwater and a profile, and the healthy ranges are set for you.<div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn primary" data-act="new-tank">Add a tank</button>${MODE==='local'?'<button class="btn" data-act="backup">Restore a backup</button>':''}</div></div></div>`; return }
+  try{ localStorage.setItem('tanklog.sel',t.id) }catch(e){}
+  backupNotice();
+  const keys=activeKeys(t); if(!keys.includes(S.chartKey)) S.chartKey = keys.includes('nitrate')?'nitrate':keys[0];
+  const L=latest(t); const o=overall(t); const rs=tankReadings(t); const last=rs[rs.length-1];
+  const recs=recommendations(t);
+  const preset=PRESETS[t.preset]?.name||'Custom';
+
+  // hero
+  let title, lede, gaugeCls=o, extra='';
+  const nAct=keys.filter(k=>L[k]&&statusOf(t,k,L[k].v)==='act').length, nWatch=keys.filter(k=>L[k]&&statusOf(t,k,L[k].v)==='watch').length;
+  if(o==='none'){ title='No tests yet'; lede='Log a water test to see how the tank is doing.' }
+  else if(o==='cyc'){ const c=cycleInfo(t); const labels=['Not started','Ammonia dropping','Nitrite stage','Final checks']; title=c.done?'Cycle complete':'Cycling'; lede=c.done?'Ready for a big water change and then livestock.':`Stage ${Math.max(c.stage,0)} of 3 · ${labels[c.stage]}.`+(nWatch?` ${nWatch} other reading${nWatch>1?'s':''} to watch.`:'');
+    extra=`<div class="stages">${[1,2,3].map(i=>`<div class="${(c.done||c.stage>=i)?'on':''}"></div>`).join('')}</div><div class="stage-labels"><span>Ammonia</span><span>Nitrite</span><span>Confirm</span></div>`;
+    gaugeCls='cyc'; }
+  else if(o==='good'){ title='All good'; lede='Every parameter is in its ideal range.' }
+  else if(o==='watch'){ title='Keep an eye on it'; lede= nWatch?`${nWatch} reading${nWatch>1?'s are':' is'} outside ideal but still acceptable.`:'Check the livestock notes below.' }
+  else { const nc=compat(t).filter(c=>c.level==='act').length; title='Needs attention'; lede=[nAct?`${nAct} reading${nAct>1?'s are':' is'} outside the safe range.`:'', nc?`${nc} livestock clash${nc>1?'es':''}.`:''].filter(Boolean).join(' ')+' See what to do below.' }
+  const icon = {good:'<path d="M9 19l7 7 13-15" fill="none" stroke="var(--good)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>',
+    watch:'<path d="M19 8v14M19 29v.5" stroke="var(--warn)" stroke-width="4" stroke-linecap="round"/>',
+    act:'<path d="M19 8v14M19 29v.5" stroke="var(--crit)" stroke-width="4" stroke-linecap="round"/>',
+    cyc:'<path d="M28 13a11 11 0 1 0 2 10" fill="none" stroke="var(--accent)" stroke-width="3.5" stroke-linecap="round"/><path d="M29 6v8h-8" fill="none" stroke="var(--accent)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>',
+    none:'<circle cx="19" cy="19" r="4" fill="var(--muted)"/>'}[gaugeCls];
+  const cdays = t.cycling&&t.cycleStart ? Math.floor((Date.now()-t.cycleStart)/DAY) : null;
+  const stagePct = o==='cyc' ? ({0:8,1:33,2:66,3:90}[cycleInfo(t).stage] + (cycleInfo(t).done?10:0)) : 0;
+  let h=`<section class="hero" aria-live="polite">
+    <div class="gauge ${gaugeCls}" style="--p:${stagePct}%"><svg viewBox="0 0 38 38">${icon}</svg></div>
+    <div style="min-width:0"><div class="eyebrow">${esc(t.water==='salt'?'Saltwater':'Freshwater')} · ${esc(preset)}${t.volumeL?` · ${esc(t.volumeL)} L`:''}</div>
+      <h2>${title}</h2><p class="lede">${lede}</p>${extra}
+      <div class="meta"><span>Last test <b>${last?ago(last.ts):'never'}</b></span><span>Tests logged <b>${rs.length}</b></span>${cdays!=null?`<span>Cycling for <b>${cdays} day${cdays===1?'':'s'}</b></span>`:''}</div></div>
+    <div class="hero-actions"><button class="btn primary" data-act="log">Log a test</button><button class="btn" data-act="settings">Tank settings</button></div>
+  </section>`;
+
+  // tiles
+  h+=`<section class="tiles" aria-label="Latest readings">`+keys.map(k=>{
+    const cur=L[k]; const st=cur?statusOf(t,k,cur.v):'none'; const R=t.ranges[k];
+    let delta=''; if(cur&&cur.prev!=null){ const d=cur.v-cur.prev; delta = Math.abs(d)<1e-9?'no change':`${d>0?'▲':'▼'} ${fmt(k,Math.abs(d))}` }
+    return `<button class="tile ${st}" data-quick="${k}" aria-label="Log ${esc(PARAMS[k].label)}">
+      <div class="tile-h"><span class="eyebrow">${esc(PARAMS[k].label)}</span><span class="pill ${st}">${STATUS_TEXT[st]}</span></div>
+      ${cur?`<div class="val">${fmt(k,cur.v)}<small>${esc(PARAMS[k].unit)}</small></div>`:`<div class="val none">Not tested</div>`}
+      ${rangeBar(t,k,cur?.v)}
+      <div class="tile-f"><span>Ideal ${fmtR(k,R.ideal)}${cur?`<br>${delta||ago(cur.ts)}`:''}</span>${spark(t,k)}</div>
+    </button>`}).join('')+`</section><p class="hint" style="margin:-10px 0 0">Tap a card to log that reading on its own, or read it from a photo.</p>`;
+
+  // livestock
+  const sp=t.species||[]; const cl=compat(t);
+  h+=`<section class="panel" aria-labelledby="sp-h"><div class="panel-h"><div><div class="eyebrow">Livestock</div><h2 id="sp-h">Species in this tank</h2></div><button class="btn small" data-act="add-species">+ Add species</button></div>`;
+  if(!sp.length) h+=`<div class="empty"><strong>No species added yet</strong>Add the animals you keep or plan to keep to see their care needs and anything they can’t live with.</div>`;
+  else h+=`<div class="splist">`+sp.map(s=>{ const A=spec(t,s.id); if(!A) return ''; const mine=cl.filter(c=>c.ids.includes(s.id)); const lv=mine.some(c=>c.level==='act')?'act':mine.length?'watch':'good';
+    return `<div class="sprow ${lv}"><button class="spmain" data-species="${esc(s.id)}"><span class="spname">${esc(A.name)}${s.count>1?` <span class="num">× ${s.count}</span>`:''}</span><span class="spsci">${esc(A.sci||'')}${A.byClaude?' · written by Claude':''}</span>
+      <span class="spfacts"><span>${A.temp?`${A.temp[0]}–${A.temp[1]}°C`:''}</span><span>${esc(A.sizeCm||'')} cm</span><span>${esc(A.lifespan||'')}</span></span></button>
+      <span class="pill ${lv}">${lv==='act'?'Clash':lv==='watch'?'Check':'Compatible'}</span></div>` }).join('')+`</div>`;
+  h+=`</section>`;
+
+  // recommendations
+  h+=`<section class="panel" aria-labelledby="rec-h">
+      <div><div class="eyebrow">What to do</div><h2 id="rec-h">Recommendations</h2></div>
+      <ul class="recs">${recs.map(r=>`<li class="rec ${r.level}"><span class="bar"></span><div><h3>${esc(r.title)}</h3><p>${esc(r.body)}</p></div></li>`).join('')}</ul>
+    </section>`;
+
+  // trends: one card per parameter
+  const ranges=[[14,'2W'],[30,'1M'],[90,'3M'],[0,'All']];
+  h+=`<section class="trends" aria-labelledby="trend-h">
+    <div class="panel-h"><div><div class="eyebrow">Trends</div><h2 id="trend-h">Each test over time</h2></div>
+      <div class="seg" role="group" aria-label="Time range">${ranges.map(([d,l])=>`<button data-range="${d}" aria-pressed="${S.chartRange===d}">${l}</button>`).join('')}</div></div>
+    <div class="legend"><span><i style="background:var(--band-ideal);outline:1px solid var(--good)"></i>Ideal range</span><span><i style="background:var(--band-ok);outline:1px solid var(--warn)"></i>Acceptable range</span><span><i style="background:var(--accent);width:3px"></i>Water change</span></div>
+    <div class="trendgrid">${keys.map(k=>{ const cur=L[k]; const st=cur?statusOf(t,k,cur.v):'none'; const R=t.ranges[k];
+      return `<article class="panel tcard" aria-label="${esc(PARAMS[k].label)} trend">
+        <div class="tcard-h"><div style="min-width:0"><h3>${esc(PARAMS[k].label)}${PARAMS[k].unit?` <span class="u">${esc(PARAMS[k].unit)}</span>`:''}</h3><div class="hint">Ideal ${fmtR(k,R.ideal)} · OK ${fmtR(k,R.ok)}</div></div>
+          <div class="tcard-r">${cur?`<span class="val">${fmt(k,cur.v)}</span>`:''}<span class="pill ${st}">${STATUS_TEXT[st]}</span></div></div>
+        <div class="chartbox" data-chartk="${k}"></div>
+        <p class="trendline">${esc(trendText(t,k))}</p>
+        <button class="btn small" data-quick="${k}" style="align-self:flex-start">+ Log ${esc(PARAMS[k].label.toLowerCase())}</button>
+      </article>` }).join('')}</div>
+  </section>`;
+
+  // history
+  const hist=rs.slice().reverse(); const shown=S.histAll?hist:hist.slice(0,12);
+  h+=`<section class="panel" aria-labelledby="hist-h"><div class="panel-h"><div><div class="eyebrow">Log</div><h2 id="hist-h">Test history</h2></div><button class="btn small" data-act="log">+ Log a test</button></div>`;
+  if(!hist.length) h+=`<div class="empty"><strong>Nothing logged yet</strong>Each test you save is time-stamped and shows up here.</div>`;
+  else{
+    h+=`<div class="tablewrap"><table><thead><tr><th>When</th>${keys.map(k=>`<th title="${esc(PARAMS[k].label)}">${esc(PARAMS[k].short)}</th>`).join('')}<th>WC</th><th style="text-align:left">Notes</th><th></th></tr></thead><tbody>`+
+      shown.map(r=>`<tr><td class="mono">${dtFmt.format(r.ts)}</td>${keys.map(k=>{ const v=r.values?.[k]; if(v==null) return '<td class="mono">–</td>'; const st=statusOf(t,k,v); return `<td class="mono"><span class="c-${st}">${fmt(k,v)}</span></td>` }).join('')}<td class="mono">${r.wc?r.wc+'%':'–'}</td><td class="notes">${r.fromPhoto?.length?'<span class="pill cyc">Photo</span> ':''}${esc(r.notes||'')}</td><td><button class="btn ghost small" data-del-reading="${r.id}" aria-label="Delete this test">Delete</button></td></tr>`).join('')+
+      `</tbody></table></div>`;
+    if(hist.length>12) h+=`<div><button class="btn small" data-act="hist-toggle">${S.histAll?'Show fewer':`Show all ${hist.length}`}</button></div>`;
+  }
+  h+=`</section>`;
+  main.innerHTML=h;
+  drawChart();
+}
+function drawChart(){
+  const t=tank(); if(!t) return;
+  document.querySelectorAll('[data-chartk]').forEach(box=>{ const W=Math.max(260,Math.round(box.clientWidth||420)); box.innerHTML=chart(t,box.dataset.chartk,S.chartRange,W,190) });
+}
+let rz; addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(drawChart,120)});
+
+/* ---------- sheets ---------- */
+function openSheet(html){ const el=$('#sheet'); el.innerHTML=`<div class="scrim" data-scrim="1"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`; el.hidden=false; const f=el.querySelector('input,select,textarea'); if(f) setTimeout(()=>f.focus(),50) }
+function closeSheet(){ const el=$('#sheet'); el.hidden=true; el.innerHTML='' }
+
+function logSheet(){
+  const t=tank(); const keys=activeKeys(t);
+  openSheet(`<div class="sheet-h"><div><div class="eyebrow">${esc(t.name)}</div><h2>Log a test</h2></div><button class="btn ghost" data-act="close" aria-label="Close">✕</button></div>
+  <form id="logform" novalidate style="display:flex;flex-direction:column;gap:12px">
+    <div class="field"><label for="f-ts">Tested at</label><input id="f-ts" type="datetime-local" value="${localInput(Date.now())}"><span class="hint">Time-stamped now. Change it if you're logging an earlier test.</span></div>
+    ${photoBlock('lp','One photo of all your tubes held against the colour chart. Line them up left to right in the order listed below.')}
+    <div>${keys.map(k=>{ const R=t.ranges[k]; return `<div class="prow"><div><div class="lbl">${esc(PARAMS[k].label)}${PARAMS[k].unit?` <span class="hint">(${esc(PARAMS[k].unit)})</span>`:''}</div><div class="hint">Ideal ${fmtR(k,R.ideal)} · OK ${fmtR(k,R.ok)}${t.cycling&&['ammonia','nitrite'].includes(k)?' · cycling: expected above 0':''}</div><div class="hint pn" id="pn-${k}"></div></div><input id="f-${k}" data-k="${k}" type="number" inputmode="decimal" step="any" min="0" placeholder="–" aria-label="${esc(PARAMS[k].label)}"></div>` }).join('')}</div>
+    <div class="grid2"><div class="field"><label for="f-wc">Water change done</label><input id="f-wc" type="number" inputmode="numeric" min="0" max="100" step="5" placeholder="% (optional)"></div><div></div></div>
+    <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" placeholder="Dosed 2 ppm ammonia, fed earthworms, cleaned sponge…"></textarea></div>
+    <p class="err" id="f-err" hidden></p>
+    <div class="actions"><button type="button" class="btn" data-act="close">Cancel</button><button type="submit" class="btn primary">Save test</button></div>
+  </form>`);
+  const form=$('#logform');
+  const photoKeys=new Set();
+  wirePhoto('lp', keys, r=>{ for(const [k,x] of Object.entries(r.readings)){ const inp=$('#f-'+k); if(!inp) continue; inp.value=String(+x.value.toFixed(PARAMS[k].dp)); inp.dispatchEvent(new Event('input',{bubbles:true})); photoKeys.add(k); const pn=$('#pn-'+k); pn.textContent=photoNote(x); pn.className='hint pn'+(x.confidence==='low'?' lowc':'') } });
+  form.addEventListener('input',e=>{ const k=e.target.dataset.k; if(!k) return; const v=e.target.value===''?null:+e.target.value; e.target.classList.remove('out-watch','out-act'); const s=statusOf(t,k,v); if(s==='watch'||s==='act') e.target.classList.add('out-'+s) });
+  form.addEventListener('submit',async e=>{
+    e.preventDefault(); const err=$('#f-err'); err.hidden=true;
+    const values={}; for(const k of keys){ const raw=$('#f-'+k).value.trim(); if(raw==='') continue; const v=parseFloat(raw.replace(',','.')); if(isNaN(v)||v<0){ err.textContent=`${PARAMS[k].label} needs a number of 0 or more.`; err.hidden=false; return } values[k]=v }
+    const wcRaw=$('#f-wc').value.trim(); const wc=wcRaw===''?0:Math.min(100,Math.max(0,parseFloat(wcRaw)||0));
+    const notes=$('#f-notes').value.trim();
+    if(!Object.keys(values).length && !wc && !notes){ err.textContent='Enter at least one reading, a water change or a note.'; err.hidden=false; return }
+    const tsv=$('#f-ts').value; const ts=tsv?new Date(tsv).getTime():Date.now();
+    const btn=form.querySelector('[type=submit]'); btn.disabled=true; btn.textContent='Saving…';
+    try{ await store.addReading({tankId:t.id,ts:isNaN(ts)?Date.now():ts,values,wc,notes,fromPhoto:[...photoKeys].filter(k=>k in values)}); closeSheet(); toast('Test saved') }
+    catch(x){ btn.disabled=false; btn.textContent='Save test'; err.textContent=x?.code==='quota_exceeded'?'Storage is full. Delete some old tests and try again.':'Couldn’t save. Check your connection and try again.'; err.hidden=false }
+  });
+}
+
+function presetOptions(water,sel){ return Object.entries(PRESETS).filter(([,p])=>p.water===water).map(([k,p])=>`<option value="${k}" ${k===sel?'selected':''}>${esc(p.name)}</option>`).join('') }
+function tankSheet(edit){
+  const t=edit?tank():{name:'',water:'fresh',preset:'axolotl',volumeL:'',cycling:true};
+  let draft = edit ? {keys:[...t.keys],ranges:JSON.parse(JSON.stringify(t.ranges))} : presetRanges(t.preset);
+  openSheet(`<div class="sheet-h"><h2>${edit?'Tank settings':'Add a tank'}</h2><button class="btn ghost" data-act="close" aria-label="Close">✕</button></div>
+  <form id="tankform" novalidate style="display:flex;flex-direction:column;gap:14px">
+    <div class="grid2"><div class="field"><label for="t-name">Name</label><input id="t-name" type="text" value="${esc(t.name)}" placeholder="Milo's tank" maxlength="40"></div>
+    <div class="field"><label for="t-vol">Volume (L)</label><input id="t-vol" type="number" inputmode="numeric" min="1" value="${esc(t.volumeL)}" placeholder="85"></div></div>
+    <div class="field"><span class="lbl">Water type</span><div class="seg" role="group" id="t-water">${['fresh','salt'].map(w=>`<button type="button" data-water="${w}" aria-pressed="${t.water===w}">${w==='fresh'?'Freshwater':'Saltwater'}</button>`).join('')}</div></div>
+    <div class="field"><label for="t-preset">Profile</label><select id="t-preset">${presetOptions(t.water,t.preset)}</select><span class="hint">Sets which parameters you test and their healthy ranges. ${edit?'Changing it resets the ranges below.':''}</span></div>
+    <label class="toggle"><input id="t-cyc" type="checkbox" ${t.cycling?'checked':''}> Cycling mode (new tank, no animals yet)</label>
+    <details ${edit?'open':''}><summary class="lbl" style="cursor:pointer">Parameters and ranges</summary><div class="tablewrap" style="margin-top:8px"><table class="rtable" id="rtable"></table></div><div style="margin-top:8px"><button type="button" class="btn small" id="t-reset">Reset to profile defaults</button></div></details>
+    <p class="err" id="t-err" hidden></p>
+    <div class="actions">${edit?'<button type="button" class="btn danger" id="t-del" style="margin-right:auto">Delete tank</button>':''}<button type="button" class="btn" data-act="close">Cancel</button><button type="submit" class="btn primary">${edit?'Save changes':'Add tank'}</button></div>
+  </form>`);
+  let water=t.water;
+  const drawR=()=>{ $('#rtable').innerHTML=`<thead><tr><th>Test</th><th>Ideal low</th><th>Ideal high</th><th>OK low</th><th>OK high</th></tr></thead><tbody>`+draft.keys.map(k=>{ const R=draft.ranges[k]; const inp=(a,i)=>`<td><input type="number" step="any" data-rk="${k}" data-a="${a}" data-i="${i}" value="${R[a][i]}" aria-label="${esc(PARAMS[k].label)} ${a} ${i?'high':'low'}"></td>`;
+    return `<tr><td><label style="display:flex;gap:6px;align-items:center;font-weight:600"><input type="checkbox" data-on="${k}" ${R.on?'checked':''}>${esc(PARAMS[k].label)}</label></td>${inp('ideal',0)}${inp('ideal',1)}${inp('ok',0)}${inp('ok',1)}</tr>` }).join('')+'</tbody>' };
+  drawR();
+  const sheet=$('#sheet');
+  sheet.querySelector('#rtable').addEventListener('change',e=>{ const el=e.target; if(el.dataset.on) draft.ranges[el.dataset.on].on=el.checked; if(el.dataset.rk){ const v=parseFloat(el.value); if(!isNaN(v)) draft.ranges[el.dataset.rk][el.dataset.a][+el.dataset.i]=v } });
+  sheet.querySelector('#t-water').addEventListener('click',e=>{ const w=e.target.dataset.water; if(!w||w===water) return; water=w; sheet.querySelectorAll('[data-water]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.water===w)); const sel=$('#t-preset'); sel.innerHTML=presetOptions(w); draft=presetRanges(sel.value); drawR() });
+  $('#t-preset').addEventListener('change',e=>{ draft=presetRanges(e.target.value); drawR() });
+  $('#t-reset').addEventListener('click',()=>{ draft=presetRanges($('#t-preset').value); drawR() });
+  const del=$('#t-del'); if(del) del.addEventListener('click',async()=>{ if(del.dataset.armed!=='1'){ del.dataset.armed='1'; del.textContent='Tap again to delete tank and all its tests'; return } del.disabled=true; await store.delTank(t.id); S.sel=null; closeSheet(); toast('Tank deleted') });
+  $('#tankform').addEventListener('submit',async e=>{
+    e.preventDefault(); const err=$('#t-err'); err.hidden=true;
+    const name=$('#t-name').value.trim(); if(!name){ err.textContent='Give the tank a name.'; err.hidden=false; return }
+    for(const k of draft.keys){ const R=draft.ranges[k]; if(R.ideal[0]>R.ideal[1]||R.ok[0]>R.ok[1]||R.ok[0]>R.ideal[0]||R.ok[1]<R.ideal[1]){ err.textContent=`${PARAMS[k].label}: the OK range must contain the ideal range, and each low must be below its high.`; err.hidden=false; return } }
+    if(!draft.keys.some(k=>draft.ranges[k].on)){ err.textContent='Turn on at least one parameter.'; err.hidden=false; return }
+    const cyc=$('#t-cyc').checked;
+    const data={name,water,preset:$('#t-preset').value,volumeL:+$('#t-vol').value||null,cycling:cyc,keys:draft.keys,ranges:draft.ranges,
+      cycleStart: cyc ? (edit&&t.cycling&&t.cycleStart? t.cycleStart : Date.now()) : null, createdAt: edit?(t.createdAt||Date.now()):Date.now(),
+      species: edit?(t.species||[]):[], custom: edit?(t.custom||{}):{}};
+    const btn=e.target.querySelector('[type=submit]'); btn.disabled=true;
+    try{ if(edit){ await store.setTank(t.id,data); toast('Settings saved') } else { const id=await store.addTank(data); S.sel=id; toast('Tank added') } closeSheet(); render() }
+    catch(x){ btn.disabled=false; err.textContent='Couldn’t save. Check your connection and try again.'; err.hidden=false }
+  });
+}
+
+/* ---------- photo reading ---------- */
+const KIT = {
+  ph:'6.0, 6.4, 6.6, 6.8, 7.0, 7.2, 7.6 (high-range pH: 7.4, 7.8, 8.0, 8.2, 8.4, 8.8)',
+  ammonia:'0, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0 ppm', nitrite:'0, 0.25, 0.5, 1.0, 2.0, 5.0 ppm', nitrate:'0, 5, 10, 20, 40, 80, 160 ppm',
+  gh:'drop-count test (1 drop = 1 dGH); read only if the count is written in the photo', kh:'drop-count test (1 drop = 1 dKH); read only if the count is written in the photo',
+  temp:'read the thermometer display or scale in °C', salinity:'specific gravity from a refractometer or hydrometer, e.g. 1.025',
+  alk:'dKH from the kit chart or a digital checker display', calcium:'ppm from the kit chart or display', magnesium:'ppm from the kit chart or display', phosphate:'ppm from the kit chart or a digital checker display'};
+let _sample;
+async function getSample(){ if(_sample!==undefined) return _sample; try{ _sample = window.claude?.use ? await window.claude.use('sample') : null }catch(e){ _sample=null } return _sample }
+async function photoCaps(){ const s=await getSample(); if(!s) return null; try{ const l=await s.limits(); return l?.images||null }catch(e){ return null } }
+function photoNote(x){ return `From photo · ${x.confidence} confidence${x.between?` · between ${x.between[0]} and ${x.between[1]}`:''}${x.why?` · ${x.why}`:''}` }
+function photoBlock(id,hint){
+  return `<div class="photo" id="${id}" hidden><div class="photo-top"><button type="button" class="btn" id="${id}-btn">Read from photo</button><span class="hint">${esc(hint)} Daylight and a white background give the best match.</span></div>
+    <input type="file" id="${id}-in" accept="image/*" hidden><div class="photo-res" id="${id}-res" hidden><img id="${id}-img" alt="Your test photo"><div class="photo-msg" id="${id}-msg" aria-live="polite"></div></div></div>`;
+}
+async function readPhoto(file,keys){
+  const s=await getSample(); if(!s) throw {message:'Photo reading isn’t available in this view. Open the page in your Claude app.'};
+  const t=tank();
+  const list=keys.map(k=>`- "${k}": ${PARAMS[k].label}${PARAMS[k].unit?` (${PARAMS[k].unit})`:''}. Typical chart values: ${KIT[k]||'use the chart in the photo'}`).join('\n');
+  const tubes=keys.filter(k=>k!=='temp').map(k=>PARAMS[k].label).join(', ');
+  const prompt=`You read aquarium water test results from a photo of a ${t?.water==='salt'?'saltwater':'freshwater'} tank's tests.
+The photo shows ${keys.length===1?`a ${PARAMS[keys[0]].label} test`:'one or more tests'}: usually liquid test tubes held against the kit's printed colour chart, or a thermometer or digital meter.
+
+Tests to read:
+${list}
+
+How to read:
+- Compare each tube's liquid colour (looking through the side of the tube against white) with the colour blocks printed on the chart IN THE PHOTO, so lighting affects both equally. Use the values printed on that chart; the typical values above are only a guide.
+- Pick the closest block. If the colour sits between two blocks, set "between" to those two values and "value" to the closer one.
+- ${keys.length>1?`If several unlabelled tubes are shown, assume left to right they are: ${tubes}. `:''}Only report a test if you can tell which tube or display it is.
+- confidence: "high" when the match is clear, "medium" when it is between blocks or the lighting is off, "low" when you are unsure.
+
+Return ONLY JSON: {"readings":{"<key>":{"value":number,"between":[low,high] or null,"confidence":"high"|"medium"|"low","why":"short phrase, e.g. 'bright yellow, matches 0'"}},"note":"one short sentence of advice about the photo, or empty"}
+Use these exact keys: ${keys.join(', ')}. Leave out any test you cannot see. If the photo is not a water test, return {"readings":{},"note":"say briefly what the photo shows instead"}.`;
+  const r=await s.json(prompt,{images:file,modelTier:'default',cache:false});
+  const out={};
+  for(const k of keys){ const x=r?.readings?.[k]; if(!x) continue; const v=Number(x.value); if(!isFinite(v)||v<0) continue;
+    const bt=Array.isArray(x.between)&&x.between.length===2&&x.between.every(n=>isFinite(Number(n)))?x.between.map(Number):null;
+    out[k]={value:v,between:bt,confidence:['high','medium','low'].includes(x.confidence)?x.confidence:'low',why:String(x.why||'').slice(0,100)} }
+  return {readings:out,note:String(r?.note||'').slice(0,240)};
+}
+async function wirePhoto(id,keys,apply){
+  const caps=await photoCaps(); const box=document.getElementById(id); if(!caps||!box) return;
+  box.hidden=false;
+  const inp=$('#'+id+'-in'), btn=$('#'+id+'-btn'), res=$('#'+id+'-res'), img=$('#'+id+'-img'), msgEl=$('#'+id+'-msg');
+  if(caps.mediaTypes?.length) inp.accept=caps.mediaTypes.join(',');
+  const msg=(cls,text)=>{ msgEl.className='photo-msg '+cls; msgEl.textContent=text };
+  btn.addEventListener('click',()=>inp.click());
+  inp.addEventListener('change',async()=>{
+    const f=inp.files&&inp.files[0]; inp.value=''; if(!f) return;
+    res.hidden=false;
+    if(caps.maxInputBytes && f.size>caps.maxInputBytes){ msg('act','That photo is too large. Try a smaller one.'); return }
+    try{ if(img.src) URL.revokeObjectURL(img.src); img.src=URL.createObjectURL(f) }catch(e){}
+    btn.disabled=true; btn.textContent='Reading…'; msg('','Claude is matching the colours to the chart…');
+    try{
+      const r=await readPhoto(f,keys); const n=Object.keys(r.readings).length;
+      if(!n) msg('watch', r.note || 'Couldn’t match a test in that photo. Retake it in daylight with the tube right next to the chart.');
+      else { apply(r); const low=Object.values(r.readings).some(x=>x.confidence==='low');
+        msg(low?'watch':'good', `Read ${n} result${n>1?'s':''}${low?'; one is uncertain':''}. Check before saving.`+(r.note?' '+r.note:'')) }
+    }catch(x){
+      msg('act', x?.code==='not_granted'?'Photo reading was declined for this page.':x?.code==='rate_limited'?'Too many reads just now. Try again in a minute.':x?.code==='image_rejected'?'That file couldn’t be read as a photo. Try a JPEG or PNG.':x?.code==='images_unavailable'?'Photo reading isn’t available here. Enter the value by hand.':(x?.message||'Couldn’t read the photo. Try again.'));
+    }finally{ btn.disabled=false; btn.textContent='Use another photo' }
+  });
+}
+
+/* ---------- quick log for one parameter ---------- */
+function quickSheet(k){
+  const t=tank(); const P=PARAMS[k]; const R=t.ranges[k]; const L=latest(t)[k];
+  const isTemp=k==='temp';
+  openSheet(`<div class="sheet-h"><div><div class="eyebrow">${esc(t.name)}</div><h2>Log ${esc(P.label)}</h2></div><button class="btn ghost" data-act="close" aria-label="Close">✕</button></div>
+  <form id="qform" novalidate style="display:flex;flex-direction:column;gap:12px">
+    <div class="qrow"><input id="q-v" type="number" inputmode="decimal" step="any" min="0" placeholder="–" aria-label="${esc(P.label)}${P.unit?' in '+esc(P.unit):''}">${P.unit?`<span class="qunit">${esc(P.unit)}</span>`:''}<span class="pill none" id="q-st">Enter a value</span></div>
+    <div class="hint">Ideal ${fmtR(k,R.ideal)}${unit(k)} · Acceptable ${fmtR(k,R.ok)}${unit(k)}${L?` · Last ${fmt(k,L.v)}${unit(k)}, ${ago(L.ts)}`:''}</div>
+    <div class="hint pn" id="q-pn"></div>
+    ${photoBlock('qp', isTemp?'Photo of the thermometer.':'Photo of the tube held right next to the colour chart.')}
+    <details><summary class="lbl" style="cursor:pointer">Time and notes</summary>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
+        <div class="field"><label for="q-ts">Tested at</label><input id="q-ts" type="datetime-local" value="${localInput(Date.now())}"></div>
+        <div class="field"><label for="q-notes">Notes</label><textarea id="q-notes" placeholder="Optional"></textarea></div>
+      </div></details>
+    <p class="err" id="q-err" hidden></p>
+    <div class="actions"><button type="button" class="btn" data-act="log" style="margin-right:auto">Full test instead</button><button type="button" class="btn" data-act="close">Cancel</button><button type="submit" class="btn primary">Save</button></div>
+  </form>`);
+  const inp=$('#q-v'), st=$('#q-st'); let fromPhoto=false;
+  const upd=()=>{ const raw=inp.value.trim(); const v=raw===''?null:parseFloat(raw); const s=statusOf(t,k,v); st.className='pill '+s; st.textContent= v==null?'Enter a value':STATUS_TEXT[s] };
+  inp.addEventListener('input',upd);
+  wirePhoto('qp',[k],r=>{ const x=r.readings[k]; if(!x) return; inp.value=String(+x.value.toFixed(P.dp)); upd(); fromPhoto=true; const pn=$('#q-pn'); pn.textContent=photoNote(x); pn.className='hint pn'+(x.confidence==='low'?' lowc':'') });
+  $('#qform').addEventListener('submit',async e=>{
+    e.preventDefault(); const err=$('#q-err'); err.hidden=true;
+    const v=parseFloat(inp.value.trim().replace(',','.'));
+    if(isNaN(v)||v<0){ err.textContent=`Enter a ${P.label.toLowerCase()} reading of 0 or more.`; err.hidden=false; inp.focus(); return }
+    const tsv=$('#q-ts').value; const ts=tsv?new Date(tsv).getTime():Date.now();
+    const btn=e.target.querySelector('[type=submit]'); btn.disabled=true; btn.textContent='Saving…';
+    try{ await store.addReading({tankId:t.id,ts:isNaN(ts)?Date.now():ts,values:{[k]:v},wc:0,notes:$('#q-notes').value.trim(),fromPhoto:fromPhoto?[k]:[]}); closeSheet(); toast(`${P.label} saved`) }
+    catch(x){ btn.disabled=false; btn.textContent='Save'; err.textContent='Couldn’t save. Check your connection and try again.'; err.hidden=false }
+  });
+}
+
+/* ---------- species sheets ---------- */
+async function saveTank(t,patch){ const d={...t,...patch}; delete d.id; await store.setTank(t.id,d) }
+let pending=null; // a Claude-written species not yet added
+function previewNotes(t,id,count,obj){
+  const tt = obj ? {...t, custom:{...(t.custom||{}),[id]:obj}} : t;
+  const cur=(t.species||[]).find(s=>s.id===id);
+  const base = cur ? {...tt, species:tt.species.map(s=>s.id===id?{...s,count}:s)} : tt;
+  return compat(base, cur?null:{id,count}).filter(c=>c.ids.includes(id));
+}
+function notesHTML(notes,name){
+  if(!notes.length) return `<div class="cnote good">No known problems with this tank or its other species.</div>`;
+  return notes.map(n=>`<div class="cnote ${n.level}">${esc(n.text)}</div>`).join('');
+}
+function librarySheet(){
+  const t=tank(); let showAll=false;
+  openSheet(`<div class="sheet-h"><div><div class="eyebrow">${esc(t.name)}</div><h2>Add species</h2></div><button class="btn ghost" data-act="close" aria-label="Close">✕</button></div>
+    <div class="field"><label for="lib-q">Search</label><input id="lib-q" type="text" placeholder="Axolotl, goby, tetra…" autocomplete="off"></div>
+    <label class="toggle"><input id="lib-all" type="checkbox"> Show ${t.water==='salt'?'freshwater':'saltwater'} species too</label>
+    <div id="lib-list"></div>
+    <div class="panel" style="padding:12px;gap:8px;background:var(--surface-2);border:0" ${window.claude?'':'hidden'}>
+      <div class="lbl">Not in the list?</div><div class="hint">Claude writes a care card, including what it can’t live with, and checks it against this tank.</div>
+      <form id="ask-f" style="display:flex;gap:8px"><input id="ask-q" type="text" placeholder="e.g. Diamond goby" maxlength="60" style="flex:1"><button class="btn primary" type="submit">Look it up</button></form>
+      <p class="err" id="ask-err" hidden></p>
+    </div>`);
+  const draw=()=>{ const q=$('#lib-q').value.trim().toLowerCase();
+    const ids=Object.keys(SPECIES).filter(id=>{ const A=SPECIES[id]; return (showAll||A.water===t.water) && (!q || (A.name+' '+A.sci).toLowerCase().includes(q)) });
+    $('#lib-list').innerHTML = ids.length ? ids.map(id=>{ const A=SPECIES[id]; const inT=(t.species||[]).some(s=>s.id===id); const n=previewNotes(t,id,A.minGroup||1).filter(c=>!/groups of/.test(c.text)); const lv=n.some(c=>c.level==='act')?'act':n.length?'watch':'good';
+      return `<button class="libitem" data-libsp="${id}"><span class="t"><b>${esc(A.name)}</b><i>${esc(A.sci)}</i></span>${inT?'<span class="pill none">In tank</span>':`<span class="pill ${lv}">${lv==='act'?'Clash':lv==='watch'?'Check':'Good fit'}</span>`}</button>` }).join('')
+      : `<p class="hint">No match in the library. Try asking Claude below.</p>`;
+  };
+  draw();
+  $('#lib-q').addEventListener('input',draw);
+  $('#lib-all').addEventListener('change',e=>{showAll=e.target.checked;draw()});
+  $('#ask-f').addEventListener('submit',e=>{ e.preventDefault(); askClaude($('#ask-q').value.trim()) });
+}
+async function askClaude(q){
+  const t=tank(); const err=$('#ask-err'); err.hidden=true;
+  if(!q){ err.textContent='Type a species name first.'; err.hidden=false; return }
+  const btn=$('#ask-f [type=submit]'); btn.disabled=true; btn.textContent='Looking up…';
+  let sample=null; try{ sample = window.claude?.use ? await window.claude.use('sample') : null }catch(x){}
+  if(!sample){ btn.disabled=false; btn.textContent='Look it up'; err.textContent='Claude lookups aren’t available in this view. Open the page in your Claude app.'; err.hidden=false; return }
+  const tagHelp = 'axolotl, small-fish (fits in a larger fish’s mouth), schooling, long-fin, fin-nipper, betta, bottom, goldfish, coldwater, shrimp (freshwater dwarf shrimp), snail, invert, pleco, cichlid, predator-small (eats small freshwater fish), clownfish, damsel, goby (burrowing marine goby), marine-small (small marine fish), pistol-shrimp, shrimp-marine, gramma, dottyback, tang, predator-marine (eats small marine fish/shrimp), coral';
+  const prompt = `You write aquarium species care cards. Return ONLY a JSON object for the species "${q}" with these fields:
+{"name":"common name","sci":"scientific name","water":"fresh" or "salt","temp":[lowC,highC],"ph":[low,high],"sizeCm":"adult size in cm as a string","lifespan":"e.g. 5–8 years","minTankL":number (litres for the first animal),"extraL":number (extra litres per additional animal),"minGroup":number or null,
+"diet":"one sentence","feeding":"one sentence","temperament":"one sentence","needs":"one sentence on habitat/setup",
+"avoid":["specific animals or groups it can't live with, each with a short reason after a colon"],"goodWith":["suitable tankmates"],
+"tags":[tags that describe THIS animal],"rules":[{"tag":"a tag it cannot live with","reason":"one sentence"}],"same":{"limit":max of its own kind per typical tank,"reason":"one sentence"} or null}
+Use only these tags in "tags" and "rules": ${tagHelp}. Include "same" when the species fights its own kind. Write plain Australian English, short sentences. If "${q}" is not a real aquarium species, return {"error":"short explanation"}.`;
+  try{
+    const r = await sample.json(prompt,{modelTier:'default'});
+    if(!r || r.error || !r.name){ throw {code:'nf',message:r?.error||'Claude couldn’t find that species.'} }
+    const num=(v,d)=>typeof v==='number'&&isFinite(v)?v:d; const pair=a=>Array.isArray(a)&&a.length===2&&a.every(x=>typeof x==='number')?a:null;
+    const tags=(r.tags||[]).filter(x=>TAGS.includes(x));
+    const obj={name:String(r.name).slice(0,60),sci:String(r.sci||'').slice(0,80),water:r.water==='salt'?'salt':'fresh',temp:pair(r.temp),ph:pair(r.ph),sizeCm:String(r.sizeCm||''),lifespan:String(r.lifespan||''),
+      minTankL:num(r.minTankL,0),extraL:num(r.extraL,0),minGroup:num(r.minGroup,0)||null,diet:String(r.diet||''),feeding:String(r.feeding||''),temperament:String(r.temperament||''),needs:String(r.needs||''),
+      avoid:(r.avoid||[]).map(String).slice(0,8),goodWith:(r.goodWith||[]).map(String).slice(0,8),tags,
+      rules:(r.rules||[]).filter(x=>x&&TAGS.includes(x.tag)).map(x=>({tag:x.tag,reason:String(x.reason||'')})).slice(0,8),
+      byClaude:true};
+    if(r.same && typeof r.same.limit==='number') obj.same={limit:r.same.limit,reason:String(r.same.reason||'')};
+    const id='c-'+obj.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40);
+    pending={id,obj}; speciesSheet(id);
+  }catch(x){
+    btn.disabled=false; btn.textContent='Look it up';
+    err.textContent = x?.code==='rate_limited'?'Too many lookups just now. Try again in a minute.':x?.code==='not_granted'?'Claude lookups were declined for this page.':(x?.message||'The lookup failed. Try again.'); err.hidden=false;
+  }
+}
+function speciesSheet(id){
+  const t=tank(); const isPending = pending && pending.id===id; const A = isPending ? pending.obj : spec(t,id); if(!A) return;
+  const cur=(t.species||[]).find(s=>s.id===id); let count = cur?cur.count:(A.minGroup||1);
+  const fact=(l,v)=> v?`<div class="fact"><span>${l}</span><b>${esc(v)}</b></div>`:'';
+  openSheet(`<div class="sheet-h"><div><div class="eyebrow">${A.water==='salt'?'Saltwater':'Freshwater'}${A.byClaude?' · written by Claude':''}</div><h2>${esc(A.name)}</h2><div class="spsci">${esc(A.sci||'')}</div></div><button class="btn ghost" data-act="close" aria-label="Close">✕</button></div>
+    <div class="facts">${fact('Temperature',A.temp&&`${A.temp[0]}–${A.temp[1]}°C`)}${fact('pH',A.ph&&`${A.ph[0].toFixed(1)}–${A.ph[1].toFixed(1)}`)}${fact('Adult size',A.sizeCm&&A.sizeCm+' cm')}${fact('Lifespan',A.lifespan)}${fact('Min tank',A.minTankL&&`${A.minTankL} L${A.extraL?` +${A.extraL}/extra`:''}`)}${fact('Group',A.same?`Max ${A.same.limit}`:A.minGroup?`${A.minGroup}+`:'Single OK')}</div>
+    <div class="care avoid"><h3>Can’t live with</h3><ul>${(A.avoid||[]).map(x=>`<li>${esc(x)}</li>`).join('')||'<li>No specific conflicts listed</li>'}</ul></div>
+    ${A.same?`<div class="care avoid"><h3>Its own kind</h3><p>${esc(A.same.reason)}</p></div>`:''}
+    <div class="care ok"><h3>Good tankmates</h3><ul>${(A.goodWith||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>
+    <div class="care"><h3>Diet</h3><p>${esc(A.diet)}</p></div>
+    <div class="care"><h3>Feeding</h3><p>${esc(A.feeding)}</p></div>
+    <div class="care"><h3>Temperament</h3><p>${esc(A.temperament)}</p></div>
+    <div class="care"><h3>Setup needs</h3><p>${esc(A.needs)}</p></div>
+    ${A.byClaude?'<p class="hint" style="margin:0">Written by Claude from general knowledge. Check with a specialist store before buying.</p>':''}
+    <div class="care"><h3>In ${esc(t.name)}</h3><div id="sp-notes" style="display:flex;flex-direction:column;gap:6px"></div></div>
+    <div class="actions" style="align-items:center">
+      ${cur?'<button type="button" class="btn danger" id="sp-rm" style="margin-right:auto">Remove</button>':''}
+      <span class="lbl">How many</span><span class="stepper"><button type="button" id="sp-minus" aria-label="One fewer">−</button><output id="sp-n">${count}</output><button type="button" id="sp-plus" aria-label="One more">+</button></span>
+      <button type="button" class="btn primary" id="sp-save">${cur?'Save':'Add to tank'}</button>
+    </div><p class="err" id="sp-err" hidden></p>`);
+  const upd=()=>{ $('#sp-n').textContent=count; $('#sp-notes').innerHTML=notesHTML(previewNotes(t,id,count,isPending?A:null)) };
+  upd();
+  $('#sp-minus').addEventListener('click',()=>{ if(count>1){count--;upd()} });
+  $('#sp-plus').addEventListener('click',()=>{ if(count<99){count++;upd()} });
+  $('#sp-save').addEventListener('click',async e=>{ e.target.disabled=true;
+    const species = cur ? t.species.map(s=>s.id===id?{...s,count}:s) : [...(t.species||[]),{id,count}];
+    const patch={species}; if(isPending) patch.custom={...(t.custom||{}),[id]:A};
+    try{ await saveTank(t,patch); pending=null; closeSheet(); render(); toast(cur?'Saved':`${A.name} added`) }
+    catch(x){ e.target.disabled=false; const er=$('#sp-err'); er.textContent='Couldn’t save. Check your connection and try again.'; er.hidden=false } });
+  const rm=$('#sp-rm'); if(rm) rm.addEventListener('click',async()=>{ if(rm.dataset.armed!=='1'){ rm.dataset.armed='1'; rm.textContent='Tap again to remove'; return } rm.disabled=true;
+    const custom={...(t.custom||{})}; delete custom[id];
+    await saveTank(t,{species:t.species.filter(s=>s.id!==id),custom}); closeSheet(); render(); toast(`${A.name} removed`) });
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('button,[data-scrim]'); if(!b) return;
+  if(b.dataset.scrim && e.target===b){ closeSheet(); return }
+  if(b.dataset.tank){ S.sel=b.dataset.tank; S.histAll=false; render(); return }
+  if(b.dataset.quick){ S.chartKey=b.dataset.quick; render(); quickSheet(b.dataset.quick); return }
+  if(b.dataset.range!=null && !b.closest('#sheet')){ S.chartRange=+b.dataset.range; render(); return }
+  if(b.dataset.delReading){ if(b.dataset.armed!=='1'){ b.dataset.armed='1'; b.textContent='Confirm'; b.classList.add('danger'); return } b.disabled=true; await store.delReading(b.dataset.delReading); toast('Test deleted'); return }
+  if(b.dataset.species){ pending=null; speciesSheet(b.dataset.species); return }
+  if(b.dataset.libsp){ pending=null; speciesSheet(b.dataset.libsp); return }
+  const a=b.dataset.act;
+  if(a==='add-species'){ librarySheet(); return }
+  if(a==='backup'){ backupSheet(); return }
+  if(a==='new-tank') tankSheet(false);
+  else if(a==='settings') tankSheet(true);
+  else if(a==='log') logSheet();
+  else if(a==='close') closeSheet();
+  else if(a==='hist-toggle'){ S.histAll=!S.histAll; render() }
+});
+document.addEventListener('change',e=>{ if(e.target.id==='chart-k'){ S.chartKey=e.target.value; render() } });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !$('#sheet').hidden) closeSheet() });
+
+/* ---------- backup, export and restore ---------- */
+function lastBackup(){ try{ return +localStorage.getItem(LS_BACKUP)||0 }catch(e){ return 0 } }
+function backupNotice(){
+  if(MODE!=='local' || !window.matchMedia) return;
+  const lb=lastBackup(); const el=$('#notice');
+  if(S.readings.length>=3 && (!lb || Date.now()-lb>14*DAY)) el.innerHTML=`<div class="notice" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="flex:1;min-width:200px">Your tests are saved on this phone only. ${lb?`Last backup ${ago(lb)}.`:'You haven’t made a backup yet.'}</span><button class="btn small" data-act="backup">Back up now</button></div>`;
+  else if(!window.claude) el.innerHTML='';
+}
+function backupJSON(){ return JSON.stringify({app:'tank-log',format:1,exportedAt:new Date().toISOString(),tanks:S.tanks,readings:S.readings}) }
+async function saveBackup(){
+  const name=`tank-log-backup-${new Date().toISOString().slice(0,10)}.json`; const json=backupJSON();
+  if(window.claude){ let dl=null; try{ dl=await window.claude.use('downloads') }catch(e){}
+    if(!dl) throw {message:'Downloads aren’t available in this view.'}
+    const r=await dl.save({filename:name,data:json}); return r }
+  const file=new File([json],name,{type:'application/json'});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file],title:'Tank Log backup'}); return {ok:true} }catch(e){ if(e&&e.name==='AbortError') return {cancelled:true} } }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(file); a.download=name; document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove() },2000); return {ok:true};
+}
+function backupSheet(){
+  const local=MODE==='local'; const lb=lastBackup();
+  openSheet(`<div class="sheet-h"><h2>${local?'Backup and restore':'Export your data'}</h2><button class="btn ghost" data-act="close" aria-label="Close">✕</button></div>
+    <div class="care"><h3>${local?'Back up':'Export'}</h3>
+      <p>${local?`Saves every tank and test to a file. Keep it in iCloud Drive, Google Drive or email it to yourself. ${lb?`Last backup ${ago(lb)}.`:'No backup yet.'}`:'Saves every tank and test to a file. Open the Tank Log phone app and use <b>Restore from file</b> to bring your history across.'}</p></div>
+    <div><button class="btn primary" id="bk-save">${local?'Back up now':'Export file'}</button></div>
+    ${local?`<div class="care"><h3>Restore</h3><p>Adds the tanks and tests from a backup or export file. Entries already on this phone are kept; matching ones are updated.</p></div>
+    <div><input type="file" id="bk-file" accept="application/json,.json" hidden><button class="btn" id="bk-restore">Restore from file</button></div>`:''}
+    <p class="hint" id="bk-msg" aria-live="polite" style="margin:0"></p>`);
+  const msg=(t,err)=>{ const m=$('#bk-msg'); m.textContent=t; m.style.color=err?'var(--crit)':'' };
+  $('#bk-save').addEventListener('click',async e=>{ e.target.disabled=true;
+    try{ const r=await saveBackup(); if(r&&r.cancelled){ msg('Backup cancelled.') } else { try{ localStorage.setItem(LS_BACKUP,String(Date.now())) }catch(x){} msg(`Saved ${S.tanks.length} tank${S.tanks.length===1?'':'s'} and ${S.readings.length} test${S.readings.length===1?'':'s'}.`); backupNotice() } }
+    catch(x){ msg(x?.code==='cancelled'||x?.code==='declined'?'Export cancelled.':(x?.message||'Couldn’t save the file. Try again.'),true) }
+    finally{ e.target.disabled=false } });
+  if(!local) return;
+  const inp=$('#bk-file'); $('#bk-restore').addEventListener('click',()=>inp.click());
+  inp.addEventListener('change',async()=>{ const f=inp.files&&inp.files[0]; inp.value=''; if(!f) return;
+    try{ const d=JSON.parse(await f.text());
+      if(!d||d.app!=='tank-log'||!Array.isArray(d.tanks)||!Array.isArray(d.readings)) throw {message:'That file isn’t a Tank Log backup.'};
+      const okT=d.tanks.filter(t=>t&&typeof t.id==='string'&&t.name&&t.ranges&&Array.isArray(t.keys));
+      const okR=d.readings.filter(r=>r&&typeof r.id==='string'&&typeof r.tankId==='string'&&typeof r.ts==='number');
+      const tm=new Map(S.tanks.map(t=>[t.id,t])); okT.forEach(t=>tm.set(t.id,t));
+      const rm=new Map(S.readings.map(r=>[r.id,r])); okR.forEach(r=>rm.set(r.id,r));
+      S.tanks=[...tm.values()]; S.readings=[...rm.values()];
+      if(!tank() && S.tanks.length) S.sel=S.tanks[0].id;
+      persist(); msg(`Restored ${okT.length} tank${okT.length===1?'':'s'} and ${okR.length} test${okR.length===1?'':'s'}.`);
+    }catch(x){ msg(x?.message||'Couldn’t read that file. Choose a Tank Log backup (.json).',true) } });
+}
+
+/* ---------- boot ---------- */
+(async()=>{
+  try{ db = window.claude?.use ? await window.claude.use('db') : null }catch(e){ db=null }
+  const bb=$('#backup-btn'); bb.hidden=false;
+  if(!db){
+    MODE='local'; const d=lsLoad(); S.tanks=d.tanks; S.readings=d.readings; S.loaded.t=S.loaded.r=true;
+    if(window.claude) $('#notice').innerHTML='<div class="notice">Cloud saving isn’t available in this view, so tests are saved in this browser only.</div>';
+    render(); return;
+  }
+  MODE='cloud'; bb.textContent='Export';
+  const fail=()=>{ $('#notice').innerHTML='<div class="notice">Lost the connection to your saved data. Reload the page to reconnect.</div>' };
+  db.collection('tanks').onSnapshot(s=>{ S.tanks=s.docs.map(d=>({id:d.id,...d.data()})); S.loaded.t=true; render() }, fail);
+  db.collection('readings').onSnapshot(s=>{ S.readings=s.docs.map(d=>({id:d.id,...d.data()})); S.loaded.r=true; render() }, fail);
+})();
+if('serviceWorker' in navigator && !window.claude && location.protocol==='https:'){ addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})) }
+</script>
+</body>
+</html>
