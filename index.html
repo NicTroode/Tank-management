@@ -696,6 +696,12 @@ function render(){
     <div class="hero-actions"><button class="btn primary" data-act="log">Log a test</button><button class="btn" data-act="feed">Log a feed</button><button class="btn" data-act="wc">Water change</button><button class="btn" data-act="settings">Tank settings</button></div>
   </section>`;
 
+  // recommendations
+  h+=`<section class="panel" aria-labelledby="rec-h">
+      <div><div class="eyebrow">What to do</div><h2 id="rec-h">Recommendations</h2></div>
+      <ul class="recs">${recs.map(r=>`<li class="rec ${r.level}"><span class="bar"></span><div><h3>${esc(r.title)}</h3><p>${esc(r.body)}</p></div></li>`).join('')}</ul>
+    </section>`;
+
   // tiles
   h+=`<section class="tiles" aria-label="Latest readings">`+keys.map(k=>{
     const cur=L[k]; const st=cur?statusOf(t,k,cur.v):'none'; const R=t.ranges[k];
@@ -716,12 +722,6 @@ function render(){
       <span class="spfacts"><span>${A.temp?`${A.temp[0]}–${A.temp[1]}°C`:''}</span><span>${esc(A.sizeCm||'')} cm</span><span>${esc(A.lifespan||'')}</span></span></button>
       <span class="pill ${lv}">${lv==='act'?'Clash':lv==='watch'?'Check':'Compatible'}</span></div>` }).join('')+`</div>`;
   h+=`</section>`;
-
-  // recommendations
-  h+=`<section class="panel" aria-labelledby="rec-h">
-      <div><div class="eyebrow">What to do</div><h2 id="rec-h">Recommendations</h2></div>
-      <ul class="recs">${recs.map(r=>`<li class="rec ${r.level}"><span class="bar"></span><div><h3>${esc(r.title)}</h3><p>${esc(r.body)}</p></div></li>`).join('')}</ul>
-    </section>`;
 
   h+=logbookHTML(t);
 

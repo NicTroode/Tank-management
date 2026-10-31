@@ -1,6 +1,6 @@
 // Tank Log service worker: keeps the app working offline.
 // Bump CACHE when the app shell changes so phones pick up the new version.
-const CACHE = 'tanklog-v2';
+const CACHE = 'tanklog-v3';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-180.png', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
 
 self.addEventListener('install', e => {
