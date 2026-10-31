@@ -215,6 +215,8 @@ button{cursor:pointer}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
 .chip.small{padding:5px 10px;font-size:.8rem;font-weight:500}
 .ngroup h3{font-family:var(--f-body);font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:6px 0 2px}
+.hcount{display:block;font-size:.68rem;color:var(--muted);font-family:var(--f-body)}
+td sup{color:var(--muted);font-size:.7em;margin-left:1px}
 .tablewrap{overflow-x:auto;margin:0 -4px}
 table{border-collapse:collapse;width:100%;font-size:.84rem}
 th,td{padding:8px 6px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
@@ -742,14 +744,20 @@ function render(){
   </section>`;
 
   // history
-  const hist=rs.slice().reverse(); const shown=S.histAll?hist:hist.slice(0,12);
+  // one row per day: the latest value of each test that day
+  const days=[]; rs.slice().reverse().forEach(r=>{ const k=dayKey(r.ts); let d=days[days.length-1]; if(!d||d.k!==k){ d={k,ts:r.ts,rs:[]}; days.push(d) } d.rs.push(r) });
+  days.forEach(d=>{ d.vals={}; d.cnt={}; d.rs.forEach(r=>{ for(const [k,v] of Object.entries(r.values||{})){ if(v==null) continue; d.cnt[k]=(d.cnt[k]||0)+1; if(!(k in d.vals)) d.vals[k]={v,ts:r.ts} } });
+    d.wc=d.rs.reduce((a,r)=>a+(+r.wc||0),0); d.notes=d.rs.map(r=>r.notes).filter(Boolean); d.photo=d.rs.some(r=>r.fromPhoto?.length) });
+  const shown=S.histAll?days:days.slice(0,12);
   h+=`<section class="panel" aria-labelledby="hist-h"><div class="panel-h"><div><div class="eyebrow">Log</div><h2 id="hist-h">Test history</h2></div><button class="btn small" data-act="log">+ Log a test</button></div>`;
-  if(!hist.length) h+=`<div class="empty"><strong>Nothing logged yet</strong>Each test you save is time-stamped and shows up here.</div>`;
+  if(!days.length) h+=`<div class="empty"><strong>Nothing logged yet</strong>Each test you save is time-stamped and shows up here.</div>`;
   else{
-    h+=`<div class="tablewrap"><table><thead><tr><th>When</th>${keys.map(k=>`<th title="${esc(PARAMS[k].label)}">${esc(PARAMS[k].short)}</th>`).join('')}<th>WC</th><th style="text-align:left">Notes</th><th></th></tr></thead><tbody>`+
-      shown.map(r=>`<tr><td class="mono">${dtFmt.format(r.ts)}</td>${keys.map(k=>{ const v=r.values?.[k]; if(v==null) return '<td class="mono">–</td>'; const st=statusOf(t,k,v); return `<td class="mono"><span class="c-${st}">${fmt(k,v)}</span></td>` }).join('')}<td class="mono">${r.wc?r.wc+'%':'–'}</td><td class="notes">${r.fromPhoto?.length?'<span class="pill cyc">Photo</span> ':''}${esc(r.notes||'')}</td><td><button class="btn ghost small" data-del-reading="${r.id}" aria-label="Delete this test">Delete</button></td></tr>`).join('')+
+    h+=`<div class="tablewrap"><table><thead><tr><th>Date</th>${keys.map(k=>`<th title="${esc(PARAMS[k].label)}">${esc(PARAMS[k].short)}</th>`).join('')}<th>WC</th><th style="text-align:left">Notes</th><th></th></tr></thead><tbody>`+
+      shown.map(d=>`<tr><td class="mono">${dayFmt.format(d.ts)}${d.rs.length>1?`<small class="hcount">${d.rs.length} entries</small>`:''}</td>${keys.map(k=>{ const x=d.vals[k]; if(!x) return '<td class="mono">–</td>'; const st=statusOf(t,k,x.v);
+          return `<td class="mono" title="${d.cnt[k]>1?`Latest of ${d.cnt[k]} readings, at ${timeFmt.format(x.ts)}`:timeFmt.format(x.ts)}"><span class="c-${st}">${fmt(k,x.v)}</span>${d.cnt[k]>1?'<sup>*</sup>':''}</td>` }).join('')}<td class="mono">${d.wc?Math.round(d.wc)+'%':'–'}</td><td class="notes">${d.photo?'<span class="pill cyc">Photo</span> ':''}${esc(d.notes.join('; '))}</td><td><button class="btn ghost small" data-del-day="${d.rs.map(r=>r.id).join(',')}" aria-label="Delete this day's tests">Delete</button></td></tr>`).join('')+
       `</tbody></table></div>`;
-    if(hist.length>12) h+=`<div><button class="btn small" data-act="hist-toggle">${S.histAll?'Show fewer':`Show all ${hist.length}`}</button></div>`;
+    if(days.some(d=>Object.values(d.cnt).some(c=>c>1))) h+=`<p class="hint" style="margin:0">* Tested more than once that day. The latest reading is shown; tap and hold for the time.</p>`;
+    if(days.length>12) h+=`<div><button class="btn small" data-act="hist-toggle">${S.histAll?'Show fewer':`Show all ${days.length} days`}</button></div>`;
   }
   h+=`</section>`;
   main.innerHTML=h;
@@ -1041,6 +1049,7 @@ document.addEventListener('click',async e=>{
   if(b.dataset.lbtab){ S.logTab=b.dataset.lbtab; try{ localStorage.setItem('tanklog.logTab',S.logTab) }catch(x){} render(); return }
   if(b.dataset.notechip){ const i=$('#n-text'); if(i){ i.value=b.dataset.notechip; i.focus() } return }
   if(b.dataset.delLog){ if(b.dataset.armed!=='1'){ b.dataset.armed='1'; b.textContent='Confirm'; b.classList.add('danger'); return } const [kind,id]=b.dataset.delLog.split(':'); logStore.del(kind,id); toast('Deleted'); return }
+  if(b.dataset.delDay){ const ids=b.dataset.delDay.split(','); if(b.dataset.armed!=='1'){ b.dataset.armed='1'; b.textContent=ids.length>1?`Delete ${ids.length} tests`:'Confirm'; b.classList.add('danger'); return } b.disabled=true; for(const id of ids) await store.delReading(id); toast(ids.length>1?`${ids.length} tests deleted`:'Test deleted'); return }
   if(b.dataset.quick){ S.chartKey=b.dataset.quick; render(); quickSheet(b.dataset.quick); return }
   if(b.dataset.range!=null && !b.closest('#sheet')){ S.chartRange=+b.dataset.range; render(); return }
   if(b.dataset.delReading){ if(b.dataset.armed!=='1'){ b.dataset.armed='1'; b.textContent='Confirm'; b.classList.add('danger'); return } b.disabled=true; await store.delReading(b.dataset.delReading); toast('Test deleted'); return }
