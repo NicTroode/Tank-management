@@ -189,6 +189,32 @@ button{cursor:pointer}
 .stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .stepper button{border:0;background:var(--surface-2);width:38px;height:38px;font-size:1.1rem;font-weight:600}
 .stepper output{min-width:44px;text-align:center;font-family:var(--f-mono)}
+.lb-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.lbstats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (min-width:640px){.lbstats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.lbstats .fact small{display:block;font-size:.7rem;color:var(--muted)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;max-width:420px}
+.cal .calh{font-size:.68rem;color:var(--muted);text-align:center;font-weight:600}
+.cal div{aspect-ratio:1;max-width:100%;border-radius:7px;background:var(--surface-2);display:grid;place-items:center;font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
+.cal div.fed{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.cal div.ref{background:transparent;outline:1.5px dashed var(--crit);outline-offset:-2px;color:var(--crit)}
+.cal div.today{box-shadow:0 0 0 2px var(--ink)}
+.cal div.fut{opacity:.35}
+.lblist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.lblist li{display:flex;align-items:baseline;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.lblist li:first-child{border-top:0}
+.lblist .when{font-size:.78rem;color:var(--muted);flex:none;width:9.5em}
+.lblist .what{flex:1;min-width:0}
+.lblist .what small{display:block;color:var(--muted);font-size:.8rem}
+.lblist .btn{flex:none;align-self:center}
+@media (max-width:420px){.lblist li{flex-wrap:wrap}.lblist .when{width:100%}}
+.noteform{display:flex;flex-direction:column;gap:8px}
+.noterow{display:flex;gap:8px;flex-wrap:wrap}
+.noterow input[type=date]{width:auto;flex:none}
+.noterow input[type=text]{flex:1;min-width:180px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip.small{padding:5px 10px;font-size:.8rem;font-weight:500}
+.ngroup h3{font-family:var(--f-body);font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:6px 0 2px}
 .tablewrap{overflow-x:auto;margin:0 -4px}
 table{border-collapse:collapse;width:100%;font-size:.84rem}
 th,td{padding:8px 6px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
@@ -278,7 +304,7 @@ const PRESETS = {
    same = how many of its own kind a tank can hold. */
 const TAGS = ['axolotl','small-fish','schooling','long-fin','fin-nipper','betta','bottom','goldfish','coldwater','shrimp','snail','invert','pleco','cichlid','predator-small','clownfish','damsel','goby','marine-small','pistol-shrimp','shrimp-marine','gramma','dottyback','tang','predator-marine','coral'];
 const SPECIES = {
-  axolotl:{name:'Axolotl',sci:'Ambystoma mexicanum',water:'fresh',temp:[16,18],ph:[7.0,7.8],sizeCm:'23–30',lifespan:'10–15 years',minTankL:75,extraL:40,
+  axolotl:{feedEvery:[2,3],name:'Axolotl',sci:'Ambystoma mexicanum',water:'fresh',temp:[16,18],ph:[7.0,7.8],sizeCm:'23–30',lifespan:'10–15 years',minTankL:75,extraL:40,
     diet:'Carnivore. Earthworms (best staple), sinking axolotl pellets; bloodworms or brine shrimp as treats only.',
     feeding:'Adults every 2–3 days until full; juveniles daily. Remove leftovers after 15 minutes.',
     temperament:'Calm and solitary. Doesn’t need company, but will try to eat anything that fits in its mouth.',
@@ -321,12 +347,12 @@ const SPECIES = {
     temperament:'Peaceful but messy, producing lots of waste.',needs:'Big tank, strong filtration and cool water. No heater needed.',
     avoid:['Tropical fish: need warmer water','Small fish and shrimp: eaten','Plecos: can suck their slime coat','Axolotls'],goodWith:['Other fancy goldfish','Nerite snails (large enough not to be eaten)'],
     tags:['goldfish','coldwater'],rules:[{tag:'small-fish',reason:'Goldfish eat anything small enough to fit in their mouths.'},{tag:'shrimp',reason:'Goldfish eat shrimp.'},{tag:'pleco',reason:'Plecos can latch on and graze goldfish slime coats.'}]},
-  cherry:{name:'Cherry shrimp',sci:'Neocaridina davidi',water:'fresh',temp:[18,26],ph:[6.5,8.0],sizeCm:'2–3',lifespan:'1–2 years',minTankL:20,extraL:0,minGroup:10,
+  cherry:{feedEvery:[1, 2],name:'Cherry shrimp',sci:'Neocaridina davidi',water:'fresh',temp:[18,26],ph:[6.5,8.0],sizeCm:'2–3',lifespan:'1–2 years',minTankL:20,extraL:0,minGroup:10,
     diet:'Algae and biofilm, plus shrimp pellets or blanched vegetables.',feeding:'A small pinch every 1–2 days.',
     temperament:'Peaceful. Breeds easily if not eaten.',needs:'Stable, cycled water; no copper medications; moss for babies to hide.',
     avoid:['Axolotls, goldfish, angelfish and most fish big enough to eat them','Copper-based medicines and fertilisers'],goodWith:['Neon tetras','Corydoras','Nerite snails','Bristlenose plecos'],
     tags:['shrimp','invert'],rules:[]},
-  nerite:{name:'Nerite snail',sci:'Neritina spp.',water:'fresh',temp:[20,27],ph:[7.0,8.5],sizeCm:'2–3',lifespan:'1–2 years',minTankL:20,extraL:0,
+  nerite:{feedEvery:[2, 4],name:'Nerite snail',sci:'Neritina spp.',water:'fresh',temp:[20,27],ph:[7.0,8.5],sizeCm:'2–3',lifespan:'1–2 years',minTankL:20,extraL:0,
     diet:'Algae grazer. Add algae wafers if the glass is clean.',feeding:'Supplement 2–3 times a week once algae runs out.',
     temperament:'Peaceful. Lays white eggs that won’t hatch in fresh water.',needs:'Harder water for a healthy shell and a lid (they climb out).',
     avoid:['Pufferfish and loaches: eat snails','Axolotls: can swallow them'],goodWith:['Almost all peaceful community fish and shrimp'],
@@ -347,12 +373,12 @@ const SPECIES = {
     avoid:['Other watchman gobies, unless a confirmed mated pair','Other burrowing gobies, such as diamond or signal gobies','Lionfish, eels, groupers and triggerfish: will eat it','Aggressive dottybacks'],
     goodWith:['Pistol shrimp: they share a burrow','Ocellaris clownfish','Royal gramma','Cleaner shrimp'],
     tags:['goby','marine-small','bottom'],rules:[{tag:'goby',reason:'Burrowing gobies fight over the same sand burrows.'},{tag:'dottyback',reason:'Dottybacks bully small, shy bottom dwellers.'}],same:{limit:1,reason:'Watchman gobies fight over burrows. Keep one, or a confirmed mated pair in a larger tank.'}},
-  pistol:{name:'Tiger pistol shrimp',sci:'Alpheus bellulus',water:'salt',temp:[22,27],ph:[8.1,8.4],sizeCm:'4–5',lifespan:'3–5 years',minTankL:40,extraL:20,
+  pistol:{feedEvery:[2, 4],name:'Tiger pistol shrimp',sci:'Alpheus bellulus',water:'salt',temp:[22,27],ph:[8.1,8.4],sizeCm:'4–5',lifespan:'3–5 years',minTankL:40,extraL:20,
     diet:'Scavenger. Takes mysis and pellets near its burrow.',feeding:'Spot-feed a few times a week; it also takes the goby’s scraps.',
     temperament:'Shy digger. Snaps its claw loudly; harmless to most fish.',needs:'Sand and rubble to burrow; ideal partner for a watchman goby.',
     avoid:['Other pistol shrimp, unless a mated pair','Triggerfish, hawkfish, puffers and large wrasses: eat shrimp'],goodWith:['Yellow watchman goby','Clownfish'],
     tags:['pistol-shrimp','shrimp-marine','invert'],rules:[],same:{limit:1,reason:'Pistol shrimp fight each other unless they are a mated pair.'}},
-  cleaner:{name:'Skunk cleaner shrimp',sci:'Lysmata amboinensis',water:'salt',temp:[24,27],ph:[8.1,8.4],sizeCm:'5–6',lifespan:'2–3 years',minTankL:75,extraL:0,
+  cleaner:{feedEvery:[3, 7],name:'Skunk cleaner shrimp',sci:'Lysmata amboinensis',water:'salt',temp:[24,27],ph:[8.1,8.4],sizeCm:'5–6',lifespan:'2–3 years',minTankL:75,extraL:0,
     diet:'Scavenger and cleaner. Takes mysis, pellets and parasites off fish.',feeding:'Usually fed by catching scraps; target-feed weekly.',
     temperament:'Peaceful; sets up a cleaning station.',needs:'Very stable salinity; acclimatise slowly. No copper.',
     avoid:['Lionfish, triggerfish, hawkfish and puffers: eat shrimp','Copper medicines'],goodWith:['Clownfish','Yellow watchman goby','Royal gramma'],
@@ -367,7 +393,7 @@ const SPECIES = {
     temperament:'Active swimmer; aggressive to other tangs.',needs:'Long tank with open swimming room and strong flow.',
     avoid:['Other tangs, especially similar shapes and colours'],goodWith:['Clownfish','Royal gramma','Cleaner shrimp'],
     tags:['tang'],rules:[{tag:'tang',reason:'Tangs fight each other, especially similar shapes and colours.'}],same:{limit:1,reason:'Keep one yellow tang unless the tank is very large.'}},
-  lionfish:{name:'Volitans lionfish',sci:'Pterois volitans',water:'salt',temp:[24,27],ph:[8.1,8.4],sizeCm:'30–38',lifespan:'10–15 years',minTankL:450,extraL:0,
+  lionfish:{feedEvery:[2, 4],name:'Volitans lionfish',sci:'Pterois volitans',water:'salt',temp:[24,27],ph:[8.1,8.4],sizeCm:'30–38',lifespan:'10–15 years',minTankL:450,extraL:0,
     diet:'Predator. Frozen silversides, prawn and krill.',feeding:'2–3 times a week.',
     temperament:'Calm but eats any fish or shrimp that fits in its mouth. Venomous spines.',needs:'Large tank; handle with care.',
     avoid:['Small fish such as clownfish, gobies and grammas','Shrimp'],goodWith:['Large fish it can’t swallow'],
@@ -407,17 +433,17 @@ function presetRanges(key){
 }
 
 /* ---------- state + store ---------- */
-const S = {tanks:[],readings:[],sel:null,chartKey:null,chartRange:30,histAll:false,loaded:{t:false,r:false}};
+const S = {tanks:[],readings:[],feeds:[],wcs:[],notes:[],logTab:'feed',sel:null,chartKey:null,chartRange:30,histAll:false,loaded:{t:false,r:false}};
 let db = null, MODE = 'loading';
 const LS_KEY='tanklog.data.v1', LS_BACKUP='tanklog.lastBackup';
-function lsLoad(){ try{ const d=JSON.parse(localStorage.getItem(LS_KEY)||'null'); if(d&&Array.isArray(d.tanks)&&Array.isArray(d.readings)) return d }catch(e){} return {tanks:[],readings:[]} }
-function persist(){ if(MODE==='local'){ try{ localStorage.setItem(LS_KEY,JSON.stringify({tanks:S.tanks,readings:S.readings})) }catch(e){ toast('Couldn’t save on this device. Storage may be full.') } try{ navigator.storage?.persist?.() }catch(e){} } render() }
+function lsLoad(){ try{ const d=JSON.parse(localStorage.getItem(LS_KEY)||'null'); if(d&&Array.isArray(d.tanks)&&Array.isArray(d.readings)) return {feeds:[],wcs:[],notes:[],...d} }catch(e){} return {tanks:[],readings:[],feeds:[],wcs:[],notes:[]} }
+function persist(){ if(MODE==='local'){ try{ localStorage.setItem(LS_KEY,JSON.stringify({tanks:S.tanks,readings:S.readings,feeds:S.feeds,wcs:S.wcs,notes:S.notes})) }catch(e){ toast('Couldn’t save on this device. Storage may be full.') } try{ navigator.storage?.persist?.() }catch(e){} } render() }
 try{ S.sel = localStorage.getItem('tanklog.sel'); }catch(e){}
 
 const store = {
   async addTank(data){ if(db){ const r = await db.collection('tanks').add(data); return r.id } const id='t'+Date.now(); S.tanks.push({id,...data}); persist(); return id },
   async setTank(id,data){ if(db) return db.collection('tanks').doc(id).set(data); const i=S.tanks.findIndex(t=>t.id===id); S.tanks[i]={id,...data}; persist() },
-  async delTank(id){ if(db){ for(const r of S.readings.filter(r=>r.tankId===id)) await db.collection('readings').doc(r.id).delete(); return db.collection('tanks').doc(id).delete() } S.readings=S.readings.filter(r=>r.tankId!==id); S.tanks=S.tanks.filter(t=>t.id!==id); persist() },
+  async delTank(id){ if(db){ for(const r of S.readings.filter(r=>r.tankId===id)) await db.collection('readings').doc(r.id).delete(); return db.collection('tanks').doc(id).delete() } S.readings=S.readings.filter(r=>r.tankId!==id); ['feeds','wcs','notes'].forEach(k=>S[k]=S[k].filter(x=>x.tankId!==id)); S.tanks=S.tanks.filter(t=>t.id!==id); persist() },
   async addReading(data){ if(db) return db.collection('readings').add(data); S.readings.push({id:'r'+Date.now(),...data}); persist() },
   async delReading(id){ if(db) return db.collection('readings').doc(id).delete(); S.readings=S.readings.filter(r=>r.id!==id); persist() },
 };
@@ -507,6 +533,7 @@ function recommendations(t){
   const out=[]; const L=latest(t); const rs=tankReadings(t); const vol=+t.volumeL||0;
   const push=(level,title,body)=>out.push({level,title,body});
   compat(t).forEach(c=>push(c.level, c.level==='act'?'Livestock clash':'Livestock check', c.text));
+  logRecs(t,push);
   if(t.cycling && (t.species||[]).length) push('cyc','Animals wait for the cycle','Add the animals listed for this tank only once the cycle is complete and nitrate is under 20 ppm.');
   if(!rs.length){ out.sort((a,b)=>({act:0,watch:1,cyc:2,good:3}[a.level])-({act:0,watch:1,cyc:2,good:3}[b.level])); push('cyc','Log your first test',t.cycling?'Dose ammonia to 2 ppm, wait an hour, then test ammonia, nitrite, nitrate and pH.':'Test every parameter on the list to set a baseline.'); return out }
   const lastTs=rs[rs.length-1].ts; const since=(Date.now()-lastTs)/DAY;
@@ -612,6 +639,7 @@ function chart(t,k,days,W,H=230){
   const span=(x1-x0)/DAY, nl=W<420?3:5;
   for(let i=0;i<nl;i++){ const ts=x0+(x1-x0)*i/(nl-1); s+=`<text x="${X(ts)}" y="${H-8}" text-anchor="${i===0?'start':i===nl-1?'end':'middle'}" font-size="11" fill="var(--muted)">${dateFmt.format(ts)}</text>` }
   // water changes
+  S.wcs.filter(w=>w.tankId===t.id && w.ts>=x0).forEach(w=>{ s+=`<line x1="${X(w.ts)}" x2="${X(w.ts)}" y1="${m.t+ih}" y2="${m.t+ih-10}" stroke="var(--accent)" stroke-width="2"><title>Water change${w.pct?' '+w.pct+'%':''}</title></line>` });
   all.filter(r=>r.wc>0 && r.ts>=x0).forEach(r=>{ s+=`<line x1="${X(r.ts)}" x2="${X(r.ts)}" y1="${m.t+ih}" y2="${m.t+ih-10}" stroke="var(--accent)" stroke-width="2"><title>${r.wc}% water change</title></line>` });
   // line
   const xy=pts.map(p=>[X(p.ts),Y(+p.values[k]),p]);
@@ -636,6 +664,7 @@ function render(){
   const t=tank(); const main=$('#main');
   if(!t){ main.innerHTML=`<div class="panel"><div class="empty"><strong>Add your first tank</strong>Choose freshwater or saltwater and a profile, and the healthy ranges are set for you.<div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn primary" data-act="new-tank">Add a tank</button>${MODE==='local'?'<button class="btn" data-act="backup">Restore a backup</button>':''}</div></div></div>`; return }
   try{ localStorage.setItem('tanklog.sel',t.id) }catch(e){}
+  try{ const lt=localStorage.getItem('tanklog.logTab'); if(lt && !S._lt){ S.logTab=lt; S._lt=1 } }catch(e){}
   backupNotice();
   const keys=activeKeys(t); if(!keys.includes(S.chartKey)) S.chartKey = keys.includes('nitrate')?'nitrate':keys[0];
   const L=latest(t); const o=overall(t); const rs=tankReadings(t); const last=rs[rs.length-1];
@@ -664,7 +693,7 @@ function render(){
     <div style="min-width:0"><div class="eyebrow">${esc(t.water==='salt'?'Saltwater':'Freshwater')} · ${esc(preset)}${t.volumeL?` · ${esc(t.volumeL)} L`:''}</div>
       <h2>${title}</h2><p class="lede">${lede}</p>${extra}
       <div class="meta"><span>Last test <b>${last?ago(last.ts):'never'}</b></span><span>Tests logged <b>${rs.length}</b></span>${cdays!=null?`<span>Cycling for <b>${cdays} day${cdays===1?'':'s'}</b></span>`:''}</div></div>
-    <div class="hero-actions"><button class="btn primary" data-act="log">Log a test</button><button class="btn" data-act="settings">Tank settings</button></div>
+    <div class="hero-actions"><button class="btn primary" data-act="log">Log a test</button><button class="btn" data-act="feed">Log a feed</button><button class="btn" data-act="wc">Water change</button><button class="btn" data-act="settings">Tank settings</button></div>
   </section>`;
 
   // tiles
@@ -693,6 +722,8 @@ function render(){
       <div><div class="eyebrow">What to do</div><h2 id="rec-h">Recommendations</h2></div>
       <ul class="recs">${recs.map(r=>`<li class="rec ${r.level}"><span class="bar"></span><div><h3>${esc(r.title)}</h3><p>${esc(r.body)}</p></div></li>`).join('')}</ul>
     </section>`;
+
+  h+=logbookHTML(t);
 
   // trends: one card per parameter
   const ranges=[[14,'2W'],[30,'1M'],[90,'3M'],[0,'All']];
@@ -727,6 +758,7 @@ function render(){
 function drawChart(){
   const t=tank(); if(!t) return;
   document.querySelectorAll('[data-chartk]').forEach(box=>{ const W=Math.max(260,Math.round(box.clientWidth||420)); box.innerHTML=chart(t,box.dataset.chartk,S.chartRange,W,190) });
+  const wb=document.getElementById('wcchart'); if(wb){ wb.innerHTML=wcChart(t,Math.max(260,Math.round(wb.clientWidth||420))) }
 }
 let rz; addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(drawChart,120)});
 
@@ -1006,6 +1038,9 @@ document.addEventListener('click',async e=>{
   const b=e.target.closest('button,[data-scrim]'); if(!b) return;
   if(b.dataset.scrim && e.target===b){ closeSheet(); return }
   if(b.dataset.tank){ S.sel=b.dataset.tank; S.histAll=false; render(); return }
+  if(b.dataset.lbtab){ S.logTab=b.dataset.lbtab; try{ localStorage.setItem('tanklog.logTab',S.logTab) }catch(x){} render(); return }
+  if(b.dataset.notechip){ const i=$('#n-text'); if(i){ i.value=b.dataset.notechip; i.focus() } return }
+  if(b.dataset.delLog){ if(b.dataset.armed!=='1'){ b.dataset.armed='1'; b.textContent='Confirm'; b.classList.add('danger'); return } const [kind,id]=b.dataset.delLog.split(':'); logStore.del(kind,id); toast('Deleted'); return }
   if(b.dataset.quick){ S.chartKey=b.dataset.quick; render(); quickSheet(b.dataset.quick); return }
   if(b.dataset.range!=null && !b.closest('#sheet')){ S.chartRange=+b.dataset.range; render(); return }
   if(b.dataset.delReading){ if(b.dataset.armed!=='1'){ b.dataset.armed='1'; b.textContent='Confirm'; b.classList.add('danger'); return } b.disabled=true; await store.delReading(b.dataset.delReading); toast('Test deleted'); return }
@@ -1014,14 +1049,230 @@ document.addEventListener('click',async e=>{
   const a=b.dataset.act;
   if(a==='add-species'){ librarySheet(); return }
   if(a==='backup'){ backupSheet(); return }
+  if(a==='feed'){ feedSheet(); return }
+  if(a==='wc'){ wcSheet(); return }
+  if(a==='feed-all'){ S.feedAll=!S.feedAll; render(); return }
+  if(a==='wc-all'){ S.wcAll=!S.wcAll; render(); return }
+  if(a==='notes-all'){ S.notesAll=!S.notesAll; render(); return }
   if(a==='new-tank') tankSheet(false);
   else if(a==='settings') tankSheet(true);
   else if(a==='log') logSheet();
   else if(a==='close') closeSheet();
   else if(a==='hist-toggle'){ S.histAll=!S.histAll; render() }
 });
+document.addEventListener('submit',e=>{ if(e.target.id==='note-form'){ e.preventDefault(); addNote() } });
 document.addEventListener('change',e=>{ if(e.target.id==='chart-k'){ S.chartKey=e.target.value; render() } });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !$('#sheet').hidden) closeSheet() });
+
+/* ---------- logbook: feeding, water changes, notes ---------- */
+const FOODS=[['Earthworm','pieces'],['Axolotl pellets','pellets'],['Bloodworm (frozen)','cubes'],['Brine shrimp (frozen)','cubes'],['Mysis shrimp (frozen)','cubes'],['Sinking pellets','pellets'],['Flakes','pinches'],['Algae wafer','wafers']];
+const NOTE_CHIPS=['Added 1 cap Seachem Prime','Added 2 caps Seachem Stability','Squeezed filter sponge','Topped up evaporation','Removed waste','Trimmed plants'];
+const PRIME_ML_PER_L=5/200; // Seachem Prime label: 5 mL (1 cap) treats 200 L
+const lid=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const logStore={
+  add(kind,data){ S[kind].push({id:lid(kind[0]),...data}); persist() },
+  del(kind,id){ S[kind]=S[kind].filter(x=>x.id!==id); persist() },
+};
+const dayFmt=new Intl.DateTimeFormat('en-AU',{weekday:'short',day:'numeric',month:'short'});
+const timeFmt=new Intl.DateTimeFormat('en-AU',{hour:'numeric',minute:'2-digit'});
+const dayKey=ts=>{ const d=new Date(ts); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate() };
+const startOfDay=ts=>{ const d=new Date(ts); d.setHours(0,0,0,0); return d.getTime() };
+function tankItems(kind,t){ return (S[kind]||[]).filter(x=>x.tankId===t.id).sort((a,b)=>b.ts-a.ts) }
+function feedEvery(t){
+  const sp=(t.species||[]).map(s=>spec(t,s.id)).filter(Boolean); if(!sp.length) return null;
+  const ev=sp.map(A=>A.feedEvery||[1,1]); return [Math.min(...ev.map(e=>e[0])),Math.min(...ev.map(e=>e[1]))];
+}
+function allWC(t){
+  const vol=+t.volumeL||0;
+  const a=tankItems('wcs',t).map(w=>({...w,src:'wc'}));
+  const b=tankReadings(t).filter(r=>r.wc>0).map(r=>({id:r.id,ts:r.ts,pct:r.wc,litres:vol?Math.round(vol*r.wc/100*10)/10:null,src:'test'}));
+  return [...a,...b].sort((x,y)=>y.ts-x.ts);
+}
+function logRecs(t,push){
+  if(t.cycling) return;
+  const fe=feedEvery(t), feeds=tankItems('feeds',t).filter(f=>!f.refused);
+  if(fe && feeds.length){ const d=(Date.now()-feeds[0].ts)/DAY; if(d>fe[1]+0.5) push('watch','Feeding due',`Last fed ${ago(feeds[0].ts)}. The species in this tank usually eat every ${fe[0]===fe[1]?fe[0]+' day'+(fe[0]>1?'s':''):fe[0]+'–'+fe[1]+' days'}.`) }
+  const ref=tankItems('feeds',t).filter(f=>f.ts>Date.now()-7*DAY); if(ref.length>=2 && ref.filter(f=>f.refused).length>=2) push('watch','Refusing food',`Food was refused ${ref.filter(f=>f.refused).length} times this week. Check temperature and test the water; stress and warm water are the usual causes.`);
+  const wcs=allWC(t);
+  if(wcs.length){ const d=(Date.now()-wcs[0].ts)/DAY; if(d>8) push('watch','Water change due',`Last water change was ${ago(wcs[0].ts)}. Aim for 20–30% each week.`) }
+  else if(tankReadings(t).length) push('watch','No water changes logged','Log each water change so the app can remind you and track how much you change.');
+}
+
+function logbookHTML(t){
+  const tab=S.logTab||'feed';
+  const tabs=[['feed','Feeding'],['wc','Water changes'],['notes','Notes']];
+  let h=`<section class="panel" aria-labelledby="lb-h"><div class="panel-h"><div><div class="eyebrow">Logbook</div><h2 id="lb-h">Care log</h2></div>
+    <div class="seg" role="tablist" aria-label="Logbook">${tabs.map(([k,l])=>`<button role="tab" data-lbtab="${k}" aria-selected="${tab===k}" aria-pressed="${tab===k}">${l}</button>`).join('')}</div></div>`;
+  h+= tab==='feed'?feedPanel(t): tab==='wc'?wcPanel(t): notesPanel(t);
+  return h+'</section>';
+}
+function statRow(items){ return `<div class="lbstats">${items.map(([l,v,sub])=>`<div class="fact"><span>${l}</span><b>${v}</b>${sub?`<small>${sub}</small>`:''}</div>`).join('')}</div>` }
+function rowDel(kind,id){ return `<button class="btn ghost small" data-del-log="${kind}:${id}" aria-label="Delete">Delete</button>` }
+
+function feedPanel(t){
+  const items=tankItems('feeds',t); const now=Date.now(); const fe=feedEvery(t);
+  let h=`<div class="lb-actions"><button class="btn primary small" data-act="feed">+ Log a feed</button>${fe?`<span class="hint">Schedule: every ${fe[0]===fe[1]?fe[0]+' day'+(fe[0]>1?'s':''):fe[0]+'–'+fe[1]+' days'}</span>`:''}</div>`;
+  if(!items.length) return h+`<div class="empty"><strong>No feeds logged yet</strong>Log each feed to track how often and how much your animals eat.</div>`;
+  const ate=items.filter(f=>!f.refused); const in30=ate.filter(f=>f.ts>now-30*DAY);
+  const asc=ate.filter(f=>f.ts>now-60*DAY).slice().reverse(); const gaps=[];
+  for(let i=1;i<asc.length;i++){ const g=(asc[i].ts-asc[i-1].ts)/DAY; if(g>0.25) gaps.push(g) }
+  const avg=gaps.length?gaps.reduce((a,b)=>a+b,0)/gaps.length:null;
+  const refused30=items.filter(f=>f.refused&&f.ts>now-30*DAY).length;
+  h+=statRow([['Last fed',ate.length?ago(ate[0].ts):'–'],['Average gap',avg!=null?avg.toFixed(1)+' days':'–'],['Feeds, 30 days',String(in30.length)],['Refused, 30 days',String(refused30)]]);
+  // calendar: 5 weeks, Monday first
+  const today=startOfDay(now); const dow=(new Date(today).getDay()+6)%7; const start=today-(28+dow)*DAY;
+  const byDay={}; items.forEach(f=>{ const k=dayKey(f.ts); (byDay[k]=byDay[k]||[]).push(f) });
+  let cal=`<div class="cal" role="img" aria-label="Feeding calendar for the last five weeks">${['M','T','W','T','F','S','S'].map(d=>`<span class="calh">${d}</span>`).join('')}`;
+  for(let d=start; d<=today+(6-dow)*DAY; d+=DAY){ const fs=byDay[dayKey(d)]||[]; const fed=fs.some(f=>!f.refused), ref=fs.some(f=>f.refused); const fut=d>today;
+    cal+=`<div class="${fed?'fed':ref?'ref':''}${d===today?' today':''}${fut?' fut':''}" title="${dayFmt.format(d)}${fs.length?': '+fs.map(f=>f.refused?'refused '+f.food:(f.qty?f.qty+' ':'')+f.food).join(', '):''}">${new Date(d).getDate()}</div>` }
+  h+=cal+`</div><div class="legend"><span><i style="background:var(--accent)"></i>Fed</span><span><i style="background:transparent;outline:1.5px dashed var(--crit)"></i>Refused</span></div>`;
+  // trend sentence + totals
+  let tr='';
+  if(avg!=null && fe){ tr = avg<fe[0]-0.5?`Feeding every ${avg.toFixed(1)} days on average, more often than the ${fe[0]}–${fe[1]} day schedule. Watch for leftover food and rising nitrate.`
+      : avg>fe[1]+0.5?`Feeding every ${avg.toFixed(1)} days on average, less often than the ${fe[0]}–${fe[1]} day schedule.`
+      : `Feeding every ${avg.toFixed(1)} days on average, in line with the ${fe[0]}–${fe[1]} day schedule.` }
+  else if(avg!=null) tr=`Feeding every ${avg.toFixed(1)} days on average over the last 60 days.`;
+  const tot={}; in30.forEach(f=>{ const k=f.food+'|'+(f.unit||''); tot[k]=(tot[k]||0)+(+f.qty||0) });
+  const totTxt=Object.entries(tot).filter(([,v])=>v>0).map(([k,v])=>{ const [food,u]=k.split('|'); return `${+v.toFixed(1)} ${u?u+' ':''}${food.toLowerCase()}` }).join(' · ');
+  if(tr) h+=`<p class="trendline">${esc(tr)}</p>`;
+  if(totTxt) h+=`<p class="hint" style="margin:0">Last 30 days: ${esc(totTxt)}</p>`;
+  const shown=S.feedAll?items:items.slice(0,8);
+  h+=`<ul class="lblist">${shown.map(f=>`<li><span class="when mono">${dayFmt.format(f.ts)} ${timeFmt.format(f.ts)}</span><span class="what">${f.refused?'<span class="pill act">Refused</span> ':''}${f.qty?`<b class="num">${+f.qty}</b> ${esc(f.unit||'')} `:''}${esc(f.food)}${f.notes?`<small>${esc(f.notes)}</small>`:''}</span>${rowDel('feeds',f.id)}</li>`).join('')}</ul>`;
+  if(items.length>8) h+=`<div><button class="btn small" data-act="feed-all">${S.feedAll?'Show fewer':`Show all ${items.length}`}</button></div>`;
+  return h;
+}
+
+function wcPanel(t){
+  const items=allWC(t); const now=Date.now(); const vol=+t.volumeL||0;
+  let h=`<div class="lb-actions"><button class="btn primary small" data-act="wc">+ Log a water change</button><span class="hint">Aim for 20–30% a week</span></div>`;
+  if(!items.length) return h+`<div class="empty"><strong>No water changes logged yet</strong>Log each change to track how much you replace and whether conditioner went in.</div>`;
+  const in30=items.filter(w=>w.ts>now-30*DAY); const L30=in30.reduce((a,w)=>a+(+w.litres||0),0);
+  const in8w=items.filter(w=>w.ts>now-56*DAY); const spanW=in8w.length?Math.min(8,Math.max(1,Math.ceil((now-Math.min(...in8w.map(w=>w.ts)))/(7*DAY)))):1; const pctWeek=in8w.reduce((a,w)=>a+(+w.pct||0),0)/spanW;
+  const own=items.filter(w=>w.src==='wc'); const primed=own.filter(w=>w.cond).length;
+  h+=statRow([['Last change',ago(items[0].ts)],['Changed, 30 days',L30?Math.round(L30)+' L':in30.length+'×'],['Average a week',in8w.length?Math.round(pctWeek)+'%':'–',`last ${spanW} week${spanW>1?'s':''}`],['Conditioner used',own.length?`${primed} of ${own.length}`:'–']]);
+  h+=`<div class="chartbox" id="wcchart"></div><div class="legend"><span><i style="background:var(--accent)"></i>Water changed each week${vol?' (L)':' (%)'}</span><span><i style="background:var(--band-ideal);outline:1px solid var(--good)"></i>20–30% target</span></div>`;
+  const shown=S.wcAll?items:items.slice(0,8);
+  h+=`<ul class="lblist">${shown.map(w=>`<li><span class="when mono">${dayFmt.format(w.ts)} ${timeFmt.format(w.ts)}</span><span class="what"><b class="num">${w.litres?(+w.litres)+' L':''}${w.litres&&w.pct?' · ':''}${w.pct?Math.round(w.pct)+'%':''}</b> ${w.src==='test'?'<span class="pill none">From test log</span>':w.cond?`<span class="pill good">${esc(w.cond.name)}${w.cond.mL?' '+(+w.cond.mL)+' mL':''}</span>`:'<span class="pill watch">No conditioner</span>'}${w.notes?`<small>${esc(w.notes)}</small>`:''}</span>${w.src==='wc'?rowDel('wcs',w.id):'<span></span>'}</li>`).join('')}</ul>`;
+  if(items.length>8) h+=`<div><button class="btn small" data-act="wc-all">${S.wcAll?'Show fewer':`Show all ${items.length}`}</button></div>`;
+  return h;
+}
+function wcChart(t,W){
+  const H=160,m={l:38,r:10,t:10,b:26},iw=W-m.l-m.r,ih=H-m.t-m.b; const vol=+t.volumeL||0;
+  const weeks=12; const today=startOfDay(Date.now()); const dow=(new Date(today).getDay()+6)%7; const wk0=today-dow*DAY-(weeks-1)*7*DAY;
+  const vals=new Array(weeks).fill(0);
+  allWC(t).forEach(w=>{ const i=Math.floor((w.ts-wk0)/(7*DAY)); if(i>=0&&i<weeks) vals[i]+= vol?(+w.litres||0):(+w.pct||0) });
+  const tLo=vol?vol*.2:20, tHi=vol?vol*.3:30;
+  const max=Math.max(...vals,tHi*1.2); const {ticks}=niceTicks(0,max,3); const top=Math.max(max,ticks[ticks.length-1]);
+  const Y=v=>m.t+ih-v/top*ih, bw=iw/weeks;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Water changed per week">`;
+  s+=`<rect x="${m.l}" y="${Y(tHi)}" width="${iw}" height="${Y(tLo)-Y(tHi)}" fill="var(--band-ideal)"/>`;
+  ticks.forEach(v=>{ s+=`<line x1="${m.l}" x2="${m.l+iw}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-dasharray="2 4"/><text x="${m.l-6}" y="${Y(v)+4}" text-anchor="end" font-size="11" font-family="IBM Plex Mono,monospace" fill="var(--muted)">${Math.round(v)}</text>` });
+  vals.forEach((v,i)=>{ const x=m.l+i*bw+bw*.18, w=bw*.64; if(v>0) s+=`<rect x="${x}" y="${Y(v)}" width="${w}" height="${Y(0)-Y(v)}" rx="3" fill="var(--accent)"><title>Week of ${dateFmt.format(wk0+i*7*DAY)}: ${Math.round(v*10)/10}${vol?' L':'%'}</title></rect>`;
+    if(i%3===0||i===weeks-1) s+=`<text x="${m.l+i*bw+bw/2}" y="${H-8}" text-anchor="middle" font-size="11" fill="var(--muted)">${dateFmt.format(wk0+i*7*DAY)}</text>` });
+  return s+'</svg>';
+}
+
+function notesPanel(t){
+  const items=tankItems('notes',t);
+  let h=`<form id="note-form" class="noteform" novalidate>
+    <div class="noterow"><label class="sr" for="n-date">Date</label><input id="n-date" type="date" value="${localInput(Date.now()).slice(0,10)}" max="${localInput(Date.now()).slice(0,10)}">
+    <label class="sr" for="n-text">Note</label><input id="n-text" type="text" maxlength="200" placeholder="e.g. Added 1 cap Seachem Prime" autocomplete="off">
+    <button class="btn primary" type="submit">Add</button></div>
+    <div class="chips">${NOTE_CHIPS.map(c=>`<button type="button" class="chip small" data-notechip="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+    <p class="err" id="n-err" hidden></p></form>`;
+  if(!items.length) return h+`<div class="empty"><strong>No notes yet</strong>Add a line for anything you do to the tank: doses, filter cleans, new plants.</div>`;
+  const groups=[]; let cur=null;
+  const list=S.notesAll?items:items.filter(n=>n.ts>Date.now()-30*DAY);
+  list.forEach(n=>{ const k=dayKey(n.ts); if(!cur||cur.k!==k){ cur={k,ts:n.ts,items:[]}; groups.push(cur) } cur.items.push(n) });
+  h+=groups.map(g=>`<div class="ngroup"><h3>${dayFmt.format(g.ts)}${dayKey(g.ts)===dayKey(Date.now())?' · Today':''}</h3><ul class="lblist">${g.items.map(n=>`<li><span class="what">${esc(n.text)}</span>${rowDel('notes',n.id)}</li>`).join('')}</ul></div>`).join('') || `<p class="hint">No notes in the last 30 days.</p>`;
+  if(items.length>list.length || S.notesAll) h+=`<div><button class="btn small" data-act="notes-all">${S.notesAll?'Show last 30 days':`Show all ${items.length}`}</button></div>`;
+  return h;
+}
+async function addNote(){
+  const t=tank(); const err=$('#n-err'); err.hidden=true;
+  const text=$('#n-text').value.trim(); const dv=$('#n-date').value;
+  if(!text){ err.textContent='Type a note first.'; err.hidden=false; $('#n-text').focus(); return }
+  let ts=Date.now();
+  if(dv && dv!==localInput(Date.now()).slice(0,10)){ const [y,mo,d]=dv.split('-').map(Number); ts=new Date(y,mo-1,d,12,0).getTime() }
+  logStore.add('notes',{tankId:t.id,ts,text}); toast('Note added');
+  setTimeout(()=>{ const i=$('#n-text'); if(i) i.focus() },50);
+}
+
+function feedSheet(){
+  const t=tank(); const last=tankItems('feeds',t)[0];
+  const opts=FOODS.map(([f,u])=>`<option value="${esc(f)}" data-unit="${esc(u)}" ${last&&last.food===f?'selected':''}>${esc(f)}</option>`).join('')+`<option value="__other" ${last&&!FOODS.some(x=>x[0]===last.food)?'selected':''}>Other…</option>`;
+  openSheet(`<div class="sheet-h"><div><div class="eyebrow">${esc(t.name)}</div><h2>Log a feed</h2></div><button class="btn ghost" data-act="close" aria-label="Close">✕</button></div>
+  <form id="feedform" novalidate style="display:flex;flex-direction:column;gap:12px">
+    <div class="field"><label for="fd-ts">Fed at</label><input id="fd-ts" type="datetime-local" value="${localInput(Date.now())}"></div>
+    <div class="field"><label for="fd-food">Food</label><select id="fd-food">${opts}</select><input id="fd-other" type="text" placeholder="Food name" maxlength="40" value="${last&&!FOODS.some(x=>x[0]===last.food)?esc(last.food):''}" hidden></div>
+    <div class="grid2"><div class="field"><label for="fd-qty">Amount</label><input id="fd-qty" type="number" inputmode="decimal" min="0" step="any" placeholder="e.g. 2" value="${last&&last.qty?+last.qty:''}"></div>
+      <div class="field"><label for="fd-unit">Unit</label><input id="fd-unit" type="text" maxlength="20" value="${esc(last?.unit||'pieces')}"></div></div>
+    <label class="toggle"><input id="fd-ref" type="checkbox"> Refused or didn’t eat it</label>
+    <div class="field"><label for="fd-notes">Notes</label><input id="fd-notes" type="text" maxlength="120" placeholder="Optional"></div>
+    <p class="err" id="fd-err" hidden></p>
+    <div class="actions"><button type="button" class="btn" data-act="close">Cancel</button><button type="submit" class="btn primary">Save feed</button></div>
+  </form>`);
+  const sel=$('#fd-food'), other=$('#fd-other'), unitI=$('#fd-unit');
+  const sync=(setUnit)=>{ other.hidden=sel.value!=='__other'; if(setUnit && sel.value!=='__other') unitI.value=sel.selectedOptions[0].dataset.unit||'' };
+  sync(false); sel.addEventListener('change',()=>sync(true));
+  $('#feedform').addEventListener('submit',e=>{ e.preventDefault(); const err=$('#fd-err'); err.hidden=true;
+    const food=sel.value==='__other'?other.value.trim():sel.value; if(!food){ err.textContent='Name the food.'; err.hidden=false; return }
+    const q=$('#fd-qty').value.trim(); const qty=q===''?null:parseFloat(q.replace(',','.')); if(qty!=null&&(isNaN(qty)||qty<0)){ err.textContent='Amount needs to be a number.'; err.hidden=false; return }
+    const tv=$('#fd-ts').value; const ts=tv?new Date(tv).getTime():Date.now();
+    logStore.add('feeds',{tankId:t.id,ts:isNaN(ts)?Date.now():ts,food,qty,unit:unitI.value.trim(),refused:$('#fd-ref').checked,notes:$('#fd-notes').value.trim()});
+    S.logTab='feed'; closeSheet(); render(); toast('Feed logged') });
+}
+
+function wcSheet(){
+  const t=tank(); const vol=+t.volumeL||0;
+  openSheet(`<div class="sheet-h"><div><div class="eyebrow">${esc(t.name)}</div><h2>Log a water change</h2></div><button class="btn ghost" data-act="close" aria-label="Close">✕</button></div>
+  <form id="wcform" novalidate style="display:flex;flex-direction:column;gap:12px">
+    <div class="field"><label for="wc-ts">Done at</label><input id="wc-ts" type="datetime-local" value="${localInput(Date.now())}"></div>
+    <div class="grid2"><div class="field"><label for="wc-pct">Percent of tank</label><input id="wc-pct" type="number" inputmode="decimal" min="0" max="100" step="any" placeholder="25"></div>
+      <div class="field"><label for="wc-l">Litres</label><input id="wc-l" type="number" inputmode="decimal" min="0" step="any" placeholder="${vol?Math.round(vol*.25):''}"></div></div>
+    <div class="chips">${[20,25,30,50].map(p=>`<button type="button" class="chip small" data-wcpct="${p}">${p}%${vol?` · ${Math.round(vol*p/10)/10} L`:''}</button>`).join('')}</div>
+    ${vol?'':'<p class="hint" style="margin:0">Add the tank volume in Tank settings to convert between % and litres.</p>'}
+    <div class="field"><span class="lbl">Did you add Seachem Prime?</span>
+      <div class="seg" role="group" id="wc-cond">${[['prime','Yes'],['none','No'],['other','Other conditioner']].map(([k,l])=>`<button type="button" data-cond="${k}" aria-pressed="false">${l}</button>`).join('')}</div></div>
+    <div id="wc-prime" hidden style="display:flex;flex-direction:column;gap:8px">
+      <div class="field" id="wc-oname-f" hidden><label for="wc-oname">Conditioner</label><input id="wc-oname" type="text" maxlength="40" placeholder="Product name"></div>
+      <div class="field"><label for="wc-ml">Amount added (mL)</label><input id="wc-ml" type="number" inputmode="decimal" min="0" step="any"></div>
+      <p class="hint" id="wc-dose" style="margin:0"></p>
+    </div>
+    <div class="cnote watch" id="wc-warn" hidden>Tap water in Perth contains chloramine, which harms axolotls and fish. Add conditioner to new water before it goes in.</div>
+    <div class="field"><label for="wc-notes">Notes</label><input id="wc-notes" type="text" maxlength="120" placeholder="e.g. Gravel vac, temperature matched"></div>
+    <p class="err" id="wc-err" hidden></p>
+    <div class="actions"><button type="button" class="btn" data-act="close">Cancel</button><button type="submit" class="btn primary">Save water change</button></div>
+  </form>`);
+  let cond=null, mlTouched=false;
+  const pct=$('#wc-pct'), lit=$('#wc-l'), ml=$('#wc-ml');
+  const dose=()=>{ const L=parseFloat(lit.value)||0; const box=$('#wc-dose');
+    const newW=L?`For ${+L.toFixed(1)} L of new water: ${(L*PRIME_ML_PER_L).toFixed(1)} mL. `:'';
+    const whole=vol?`For the whole ${vol} L tank (if you add it while refilling): ${(vol*PRIME_ML_PER_L).toFixed(1)} mL.`:'';
+    box.textContent = cond==='prime' ? `Label dose: 5 mL (1 cap) per 200 L. ${newW}${whole}` : '';
+    if(cond==='prime' && !mlTouched){ const v=vol?vol*PRIME_ML_PER_L:L*PRIME_ML_PER_L; ml.value=v?(Math.round(v*10)/10):'' } };
+  pct.addEventListener('input',()=>{ if(vol){ const p=parseFloat(pct.value); lit.value=isNaN(p)?'':Math.round(vol*p/10)/10 } dose() });
+  lit.addEventListener('input',()=>{ if(vol){ const l=parseFloat(lit.value); pct.value=isNaN(l)?'':Math.round(l/vol*1000)/10 } dose() });
+  ml.addEventListener('input',()=>{ mlTouched=true });
+  $('#wcform').addEventListener('click',e=>{
+    const c=e.target.closest('[data-wcpct]'); if(c){ pct.value=c.dataset.wcpct; pct.dispatchEvent(new Event('input')); return }
+    const b=e.target.closest('[data-cond]'); if(!b) return;
+    cond=b.dataset.cond; document.querySelectorAll('#wc-cond [data-cond]').forEach(x=>x.setAttribute('aria-pressed',x===b));
+    $('#wc-prime').hidden=cond==='none'; $('#wc-oname-f').hidden=cond!=='other'; $('#wc-warn').hidden=cond!=='none';
+    if(cond==='other' && !mlTouched) ml.value=''; dose();
+  });
+  $('#wcform').addEventListener('submit',e=>{ e.preventDefault(); const err=$('#wc-err'); err.hidden=true;
+    const p=parseFloat(pct.value), l=parseFloat(lit.value);
+    if((isNaN(p)||p<=0)&&(isNaN(l)||l<=0)){ err.textContent='Enter how much water you changed, as a % or in litres.'; err.hidden=false; return }
+    if(!isNaN(p)&&p>100){ err.textContent='Percent can’t be more than 100.'; err.hidden=false; return }
+    if(!cond){ err.textContent='Answer whether you added Seachem Prime or another conditioner.'; err.hidden=false; $('#wc-cond').scrollIntoView({block:'center'}); return }
+    let c=null;
+    if(cond==='prime') c={name:'Seachem Prime',mL:parseFloat(ml.value)||null};
+    if(cond==='other'){ const n=$('#wc-oname').value.trim(); if(!n){ err.textContent='Name the conditioner you used.'; err.hidden=false; return } c={name:n,mL:parseFloat(ml.value)||null} }
+    const tv=$('#wc-ts').value; const ts=tv?new Date(tv).getTime():Date.now();
+    logStore.add('wcs',{tankId:t.id,ts:isNaN(ts)?Date.now():ts,pct:isNaN(p)?(vol&&!isNaN(l)?Math.round(l/vol*1000)/10:null):p,litres:isNaN(l)?(vol&&!isNaN(p)?Math.round(vol*p/10)/10:null):l,cond:c,notes:$('#wc-notes').value.trim()});
+    S.logTab='wc'; closeSheet(); render(); toast('Water change logged') });
+}
 
 /* ---------- backup, export and restore ---------- */
 function lastBackup(){ try{ return +localStorage.getItem(LS_BACKUP)||0 }catch(e){ return 0 } }
@@ -1031,7 +1282,7 @@ function backupNotice(){
   if(S.readings.length>=3 && (!lb || Date.now()-lb>14*DAY)) el.innerHTML=`<div class="notice" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="flex:1;min-width:200px">Your tests are saved on this phone only. ${lb?`Last backup ${ago(lb)}.`:'You haven’t made a backup yet.'}</span><button class="btn small" data-act="backup">Back up now</button></div>`;
   else if(!window.claude) el.innerHTML='';
 }
-function backupJSON(){ return JSON.stringify({app:'tank-log',format:1,exportedAt:new Date().toISOString(),tanks:S.tanks,readings:S.readings}) }
+function backupJSON(){ return JSON.stringify({app:'tank-log',format:1,exportedAt:new Date().toISOString(),tanks:S.tanks,readings:S.readings,feeds:S.feeds,wcs:S.wcs,notes:S.notes}) }
 async function saveBackup(){
   const name=`tank-log-backup-${new Date().toISOString().slice(0,10)}.json`; const json=backupJSON();
   if(window.claude){ let dl=null; try{ dl=await window.claude.use('downloads') }catch(e){}
@@ -1054,7 +1305,7 @@ function backupSheet(){
     <p class="hint" id="bk-msg" aria-live="polite" style="margin:0"></p>`);
   const msg=(t,err)=>{ const m=$('#bk-msg'); m.textContent=t; m.style.color=err?'var(--crit)':'' };
   $('#bk-save').addEventListener('click',async e=>{ e.target.disabled=true;
-    try{ const r=await saveBackup(); if(r&&r.cancelled){ msg('Backup cancelled.') } else { try{ localStorage.setItem(LS_BACKUP,String(Date.now())) }catch(x){} msg(`Saved ${S.tanks.length} tank${S.tanks.length===1?'':'s'} and ${S.readings.length} test${S.readings.length===1?'':'s'}.`); backupNotice() } }
+    try{ const r=await saveBackup(); if(r&&r.cancelled){ msg('Backup cancelled.') } else { try{ localStorage.setItem(LS_BACKUP,String(Date.now())) }catch(x){} msg(`Saved ${S.tanks.length} tank${S.tanks.length===1?'':'s'}, ${S.readings.length} test${S.readings.length===1?'':'s'} and ${S.feeds.length+S.wcs.length+S.notes.length} log entries.`); backupNotice() } }
     catch(x){ msg(x?.code==='cancelled'||x?.code==='declined'?'Export cancelled.':(x?.message||'Couldn’t save the file. Try again.'),true) }
     finally{ e.target.disabled=false } });
   if(!local) return;
@@ -1067,8 +1318,9 @@ function backupSheet(){
       const tm=new Map(S.tanks.map(t=>[t.id,t])); okT.forEach(t=>tm.set(t.id,t));
       const rm=new Map(S.readings.map(r=>[r.id,r])); okR.forEach(r=>rm.set(r.id,r));
       S.tanks=[...tm.values()]; S.readings=[...rm.values()];
+      let nLog=0; ['feeds','wcs','notes'].forEach(k=>{ const arr=Array.isArray(d[k])?d[k].filter(x=>x&&typeof x.id==='string'&&typeof x.tankId==='string'&&typeof x.ts==='number'):[]; nLog+=arr.length; const m=new Map(S[k].map(x=>[x.id,x])); arr.forEach(x=>m.set(x.id,x)); S[k]=[...m.values()] });
       if(!tank() && S.tanks.length) S.sel=S.tanks[0].id;
-      persist(); msg(`Restored ${okT.length} tank${okT.length===1?'':'s'} and ${okR.length} test${okR.length===1?'':'s'}.`);
+      persist(); msg(`Restored ${okT.length} tank${okT.length===1?'':'s'} and ${okR.length} test${okR.length===1?'':'s'}${nLog?`, plus ${nLog} log entr${nLog===1?'y':'ies'}`:''}.`);
     }catch(x){ msg(x?.message||'Couldn’t read that file. Choose a Tank Log backup (.json).',true) } });
 }
 
@@ -1077,7 +1329,7 @@ function backupSheet(){
   try{ db = window.claude?.use ? await window.claude.use('db') : null }catch(e){ db=null }
   const bb=$('#backup-btn'); bb.hidden=false;
   if(!db){
-    MODE='local'; const d=lsLoad(); S.tanks=d.tanks; S.readings=d.readings; S.loaded.t=S.loaded.r=true;
+    MODE='local'; const d=lsLoad(); S.tanks=d.tanks; S.readings=d.readings; S.feeds=d.feeds; S.wcs=d.wcs; S.notes=d.notes; S.loaded.t=S.loaded.r=true;
     if(window.claude) $('#notice').innerHTML='<div class="notice">Cloud saving isn’t available in this view, so tests are saved in this browser only.</div>';
     render(); return;
   }
